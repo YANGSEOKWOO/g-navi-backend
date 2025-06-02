@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: local  # local, prod
+    active: local # local, prod
 
   jpa:
     hibernate:
@@ -10,18 +10,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
----
-spring:
-  config:
-    activate:
-      on-profile: local
-  datasource:
-    url: jdbc:postgresql://localhost:5432/gnavidb
-    username: gnavi_user
-    password: gnavipwd
-    driver-class-name: org.postgresql.Driver
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: gnavi
+springdoc:
+  swagger-ui:
+    path: /swagger/swagger-ui
+  api-docs:
+    path: /swagger/swagger-docs

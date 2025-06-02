@@ -1,0 +1,14 @@
+spring:
+    config:
+        activate:
+            on-profile: local
+    datasource:
+        url: jdbc:postgresql://localhost:5432/gnavidb
+        username: gnavi_user
+        password: gnavipwd
+        driver-class-name: org.postgresql.Driver
+    data:
+        mongodb:
+            host: localhost
+            port: 27017
+            database: gnavi
