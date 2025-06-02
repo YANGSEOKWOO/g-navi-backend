@@ -1,0 +1,54 @@
+# -------------------------
+# Git
+# -------------------------
+.git
+.gitignore
+
+# -------------------------
+# OS / 시스템
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# IDEs / 편집기
+# -------------------------
+.idea
+*.iml
+*.iws
+.vscode
+*.sw?
+
+# -------------------------
+# Gradle
+# -------------------------
+.gradle
+build/tmp/
+build/reports/
+build/test-results/
+build/classes/
+build/resources/
+build/generated/
+build/dependency-cache/
+build/libs/*.jar.old
+
+# ✅ build/libs는 포함해야 하므로 제외하지 마세요
+# ❗ 아래는 주석 처리하거나 삭제
+# build/
+
+# -------------------------
+# 환경파일 / 인증서 / 민감정보
+# -------------------------
+.env
+.env.*
+*.key
+*.crt
+*.pem
+secret.*
+secret.yaml
+
+# -------------------------
+# Docker / 기타 설정
+# -------------------------
+docker-compose.override.yml
+Dockerfile~
