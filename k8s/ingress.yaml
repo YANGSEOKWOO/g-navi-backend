@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: gnavi4-ingress
-  namespace: skala-team-04
+  namespace: sk-team-04
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
