@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gnavi4-backend
+  namespace: sk-team-04
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gnavi4-backend
+  template:
+    metadata:
+      labels:
+        app: gnavi4-backend
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: webserver
+          image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be:1.0.0
+          imagePullPolicy: Always
+          env:
+            - name: LOGGING_LEVEL_ROOT
+              value: DEBUG
+            - name: NAMESPACE
+              value: sk-team-04
