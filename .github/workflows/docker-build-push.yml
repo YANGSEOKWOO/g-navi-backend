@@ -2,7 +2,9 @@ name: Docker Build & Push
 
 on:
   push:
-    branches: [ main ] # 원하는 브랜치 지정
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
 
 env:
   IMAGE_REGISTRY: amdp-registry.skala-ai.com/skala25a
