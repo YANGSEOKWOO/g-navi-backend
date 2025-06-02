@@ -1,5 +1,5 @@
---
-name: Build, Push Docker & Update deploy.yaml
+---
+name: Build and Push to Harbor
 
 on:
   push:
