@@ -1,4 +1,7 @@
 spring:
+  sql:
+    init:
+      mode: never
   config:
     activate:
       on-profile: prod
