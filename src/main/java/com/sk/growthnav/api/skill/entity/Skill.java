@@ -15,7 +15,7 @@ public class Skill extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "skill_id", unique = true)
-    private String id;
+    private Long id;
 
     @Column(length = 50, name = "skill_name")
     private String name;
