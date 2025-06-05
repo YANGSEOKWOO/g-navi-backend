@@ -40,6 +40,12 @@ dependencies {
 
     // postgre
 
+    // 테스트용 인메모리 DB
+    testImplementation 'com.h2database:h2'
+
+    // 테스트용 임베디드 MongoDB (선택사항)
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.9.0'
+
 }
 
 tasks.named('test') {
