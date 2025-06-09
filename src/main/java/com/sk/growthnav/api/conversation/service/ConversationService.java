@@ -172,4 +172,21 @@ public class ConversationService {
             return "죄송합니다. 메시지 처리 중 오류가 발생했습니다.";
         }
     }
+
+    /**
+     * 채팅방 삭제
+     */
+    @Transactional
+    public void deleteConversation(String conversationId) {
+        log.info("채팅방 삭제: conversationId={}", conversationId);
+
+        // 대화 존재 여부 확인
+        ConversationDocument conversation = findConversationById(conversationId);
+
+        // 삭제 실행
+        conversationRepository.delete(conversation);
+
+        log.info("채팅방 삭제 완료: conversationId={}, messageCount={}",
+                conversationId, conversation.getMessageCount());
+    }
 }
