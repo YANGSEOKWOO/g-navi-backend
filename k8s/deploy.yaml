@@ -16,13 +16,11 @@ spec:
       serviceAccountName: default
       containers:
         - name: webserver
-          image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be:1.0.0-x
+          image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be:17-2c2bec0da712
           imagePullPolicy: Always
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: prod
-            - name: LOGGING_LEVEL_ROOT
-              value: DEBUG
             - name: NAMESPACE
               value: sk-team-04
             - name: SPRING_DATASOURCE_URL

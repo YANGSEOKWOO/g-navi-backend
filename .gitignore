@@ -99,3 +99,6 @@ k8s/*-secret.yaml
 docker-compose.override.yml
 .env
 .env.*
+k8s/git-repository.yaml
+k8s/application.yaml
+./gnavi4-argocd-config
