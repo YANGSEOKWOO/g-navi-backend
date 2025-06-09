@@ -36,9 +36,15 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // swagger
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
     // postgre
+
+    // 테스트용 인메모리 DB
+    testImplementation 'com.h2database:h2'
+
+    // 테스트용 임베디드 MongoDB (선택사항)
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.9.0'
 
 }
 
