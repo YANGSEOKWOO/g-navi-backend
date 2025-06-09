@@ -12,7 +12,7 @@ spring:
     username: ${POSTGRE_DB_USERNAME}
     password: ${POSTGRE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-#fastapi:
-#  base-url: ${FASTAPI_BASE_URL}
-#  endpoints:
-#    chat-room-create: /ai/room/c
+
+    data:
+      mongodb:
+        uri: ${MONGO_URI}
