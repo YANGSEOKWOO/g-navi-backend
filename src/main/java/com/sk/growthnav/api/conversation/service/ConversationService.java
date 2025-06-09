@@ -62,7 +62,7 @@ public class ConversationService {
     }
 
     /**
-     * 메시지 전송 및 AI 응답 처리
+     * 메시지 전송 및 AI 응답 처리 (member_info 없이 간단한 Message)
      */
     @Transactional
     public ConversationStartResponse sendMessage(MessageSendRequest request) {
@@ -85,6 +85,7 @@ public class ConversationService {
 
         return ConversationStartResponse.of(savedConversation.getId(), botResponse);
     }
+
 
     /**
      * 회원의 대화 목록 조회
@@ -170,5 +171,22 @@ public class ConversationService {
             log.error("FastAPI 메시지 처리 중 오류 발생", e);
             return "죄송합니다. 메시지 처리 중 오류가 발생했습니다.";
         }
+    }
+
+    /**
+     * 채팅방 삭제
+     */
+    @Transactional
+    public void deleteConversation(String conversationId) {
+        log.info("채팅방 삭제: conversationId={}", conversationId);
+
+        // 대화 존재 여부 확인
+        ConversationDocument conversation = findConversationById(conversationId);
+
+        // 삭제 실행
+        conversationRepository.delete(conversation);
+
+        log.info("채팅방 삭제 완료: conversationId={}, messageCount={}",
+                conversationId, conversation.getMessageCount());
     }
 }

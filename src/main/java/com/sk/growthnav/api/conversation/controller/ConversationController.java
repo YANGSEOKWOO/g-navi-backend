@@ -6,9 +6,6 @@ import com.sk.growthnav.api.conversation.dto.ConversationStartResponse;
 import com.sk.growthnav.api.conversation.dto.MessageSendRequest;
 import com.sk.growthnav.api.conversation.service.ConversationService;
 import com.sk.growthnav.global.apiPayload.ApiResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,183 +14,120 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/conversations")
+@RequestMapping("/api/chatrooms")  // 더 직관적인 경로
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Conversation", description = "대화 관리 API")
 public class ConversationController {
 
     private final ConversationService conversationService;
 
     /**
-     * 새로운 대화 시작 또는 기존 대화 이어가기
-     * POST /api/conversations/start
+     * 새로운 채팅방 생성
+     * POST /api/chatrooms
+     * <p>
+     * Body: {"memberId": 1, "conversationId": null}  # 새 채팅방
+     * Body: {"memberId": 1, "conversationId": "existing_id"}  # 기존 채팅방 재시작
      */
-    @PostMapping("/start")
-    @Operation(summary = "대화 시작", description = "새로운 대화를 시작하거나 기존 대화를 이어갑니다.")
-    public ApiResponse<ConversationStartResponse> startConversation(
+    @PostMapping
+    public ApiResponse<ConversationStartResponse> createChatroom(
             @Valid @RequestBody ConversationStartRequest request) {
 
-        log.info("대화 시작 API 호출: memberId={}, conversationId={}",
+        log.info("채팅방 생성/재시작 요청: memberId={}, conversationId={}",
                 request.getMemberId(), request.getConversationId());
 
         ConversationStartResponse response = conversationService.startConversation(request);
 
-        log.info("대화 시작 완료: conversationId={}", response.getConversationId());
+        log.info("채팅방 생성/재시작 완료: conversationId={}", response.getConversationId());
         return ApiResponse.onSuccess(response);
     }
 
     /**
-     * 메시지 전송
-     * POST /api/conversations/message
+     * 기존 채팅방 목록 조회 (현재 사용자)
+     * GET /api/chatrooms?memberId=1
      */
-    @PostMapping("/message")
-    @Operation(summary = "메시지 전송", description = "대화에 메시지를 전송하고 AI 응답을 받습니다.")
-    public ApiResponse<ConversationStartResponse> sendMessage(
-            @Valid @RequestBody MessageSendRequest request) {
+    @GetMapping
+    public ApiResponse<List<ConversationDocument>> getChatrooms(
+            @RequestParam Long memberId) {
 
-        log.info("메시지 전송 API 호출: conversationId={}, memberId={}",
-                request.getConversationId(), request.getMemberId());
-
-        ConversationStartResponse response = conversationService.sendMessage(request);
-
-        log.info("메시지 전송 완료: conversationId={}", response.getConversationId());
-        return ApiResponse.onSuccess(response);
-    }
-
-    /**
-     * 회원의 대화 목록 조회
-     * GET /api/conversations/member/{memberId}
-     */
-    @GetMapping("/member/{memberId}")
-    @Operation(summary = "대화 목록 조회", description = "특정 회원의 모든 대화 목록을 조회합니다.")
-    public ApiResponse<List<ConversationListResponse>> getConversationsByMember(
-            @Parameter(description = "회원 ID") @PathVariable Long memberId) {
-
-        log.info("대화 목록 조회 API 호출: memberId={}", memberId);
+        log.info("채팅방 목록 조회: memberId={}", memberId);
 
         List<ConversationDocument> conversations = conversationService.getConversationsByMember(memberId);
 
-        // ConversationDocument -> ConversationListResponse 변환
-        List<ConversationListResponse> response = conversations.stream()
-                .map(ConversationListResponse::from)
-                .toList();
+        log.info("채팅방 목록 조회 완료: memberId={}, count={}", memberId, conversations.size());
+        return ApiResponse.onSuccess(conversations);
+    }
 
-        log.info("대화 목록 조회 완료: memberId={}, count={}", memberId, response.size());
+    /**
+     * 특정 채팅방 상세 조회 (대화 내용 포함)
+     * GET /api/chatrooms/{chatroom_id}
+     */
+    @GetMapping("/{chatroomId}")
+    public ApiResponse<ConversationDocument> getChatroomDetail(@PathVariable String chatroomId) {
+
+        log.info("채팅방 상세 조회: chatroomId={}", chatroomId);
+
+        ConversationDocument conversation = conversationService.getConversationDetail(chatroomId);
+
+        log.info("채팅방 상세 조회 완료: chatroomId={}, messageCount={}",
+                chatroomId, conversation.getMessageCount());
+        return ApiResponse.onSuccess(conversation);
+    }
+
+    /**
+     * 채팅방 삭제
+     * DELETE /api/chatrooms/{chatroom_id}
+     */
+    @DeleteMapping("/{chatroomId}")
+    public ApiResponse<String> deleteChatroom(@PathVariable String chatroomId) {
+
+        log.info("채팅방 삭제 요청: chatroomId={}", chatroomId);
+
+        conversationService.deleteConversation(chatroomId);
+
+        log.info("채팅방 삭제 완료: chatroomId={}", chatroomId);
+        return ApiResponse.onSuccess("채팅방이 삭제되었습니다.");
+    }
+
+    /**
+     * 메시지 입력 (AI 응답 포함)
+     * POST /api/chatrooms/{chatroom_id}/messages
+     */
+    @PostMapping("/{chatroomId}/messages")
+    public ApiResponse<ConversationStartResponse> sendMessage(
+            @PathVariable String chatroomId,
+            @Valid @RequestBody MessageSendRequest request) {
+
+        // 경로의 chatroomId와 요청 body의 conversationId 일치 검증
+        if (!chatroomId.equals(request.getConversationId())) {
+            throw new IllegalArgumentException("경로의 채팅방 ID와 요청 데이터의 대화 ID가 일치하지 않습니다.");
+        }
+
+        log.info("메시지 전송: chatroomId={}, memberId={}, message={}",
+                chatroomId, request.getMemberId(), request.getMessageText());
+
+        ConversationStartResponse response = conversationService.sendMessage(request);
+
+        log.info("메시지 전송 완료: chatroomId={}", chatroomId);
         return ApiResponse.onSuccess(response);
     }
 
     /**
-     * 특정 대화 상세 조회
-     * GET /api/conversations/{conversationId}
+     * 메시지 목록 조회 (페이징) - 선택사항
+     * GET /api/chatrooms/{chatroom_id}/messages?page=0&size=20
      */
-    @GetMapping("/{conversationId}")
-    @Operation(summary = "대화 상세 조회", description = "특정 대화의 전체 메시지를 조회합니다.")
-    public ApiResponse<ConversationDetailResponse> getConversationDetail(
-            @Parameter(description = "대화 ID") @PathVariable String conversationId) {
+    @GetMapping("/{chatroomId}/messages")
+    public ApiResponse<ConversationDocument> getChatroomMessages(
+            @PathVariable String chatroomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
 
-        log.info("대화 상세 조회 API 호출: conversationId={}", conversationId);
+        log.info("메시지 목록 조회: chatroomId={}, page={}, size={}", chatroomId, page, size);
 
-        ConversationDocument conversation = conversationService.getConversationDetail(conversationId);
-        ConversationDetailResponse response = ConversationDetailResponse.from(conversation);
+        // 현재는 전체 메시지 반환, 나중에 페이징 구현 가능
+        ConversationDocument conversation = conversationService.getConversationDetail(chatroomId);
 
-        log.info("대화 상세 조회 완료: conversationId={}, messageCount={}",
-                conversationId, response.getMessageCount());
-        return ApiResponse.onSuccess(response);
-    }
-
-    /**
-     * 대화 목록 응답 DTO
-     */
-    @lombok.Getter
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    @lombok.Builder
-    public static class ConversationListResponse {
-        private String conversationId;
-        private Long memberId;
-        private String lastMessage;
-        private String lastMessageTime;
-        private int messageCount;
-        private java.time.LocalDateTime createdAt;
-
-        public static ConversationListResponse from(ConversationDocument conversation) {
-            ConversationDocument.MessageDocument latestMessage = conversation.getLatestMessage();
-
-            return ConversationListResponse.builder()
-                    .conversationId(conversation.getId())
-                    .memberId(conversation.getMemberId())
-                    .lastMessage(latestMessage != null ? latestMessage.getMessageText() : "")
-                    .lastMessageTime(latestMessage != null ?
-                            formatTime(latestMessage.getTimestamp()) : "")
-                    .messageCount(conversation.getMessageCount())
-                    .createdAt(conversation.getCreatedAt())
-                    .build();
-        }
-
-        private static String formatTime(java.time.LocalDateTime dateTime) {
-            // 간단한 시간 포맷팅 (예: "2시간 전", "1일 전")
-            java.time.Duration duration = java.time.Duration.between(dateTime, java.time.LocalDateTime.now());
-
-            if (duration.toMinutes() < 60) {
-                return duration.toMinutes() + "분 전";
-            } else if (duration.toHours() < 24) {
-                return duration.toHours() + "시간 전";
-            } else {
-                return duration.toDays() + "일 전";
-            }
-        }
-    }
-
-    /**
-     * 대화 상세 응답 DTO
-     */
-    @lombok.Getter
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    @lombok.Builder
-    public static class ConversationDetailResponse {
-        private String conversationId;
-        private Long memberId;
-        private List<MessageResponse> messages;
-        private int messageCount;
-        private java.time.LocalDateTime createdAt;
-        private java.time.LocalDateTime updatedAt;
-
-        public static ConversationDetailResponse from(ConversationDocument conversation) {
-            List<MessageResponse> messages = conversation.getMessages().stream()
-                    .map(MessageResponse::from)
-                    .toList();
-
-            return ConversationDetailResponse.builder()
-                    .conversationId(conversation.getId())
-                    .memberId(conversation.getMemberId())
-                    .messages(messages)
-                    .messageCount(conversation.getMessageCount())
-                    .createdAt(conversation.getCreatedAt())
-                    .updatedAt(conversation.getUpdatedAt())
-                    .build();
-        }
-    }
-
-    /**
-     * 메시지 응답 DTO
-     */
-    @lombok.Getter
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    @lombok.Builder
-    public static class MessageResponse {
-        private String senderType;
-        private String messageText;
-        private java.time.LocalDateTime timestamp;
-
-        public static MessageResponse from(ConversationDocument.MessageDocument message) {
-            return MessageResponse.builder()
-                    .senderType(message.getSenderType().name())
-                    .messageText(message.getMessageText())
-                    .timestamp(message.getTimestamp())
-                    .build();
-        }
+        log.info("메시지 목록 조회 완료: chatroomId={}, messageCount={}",
+                chatroomId, conversation.getMessageCount());
+        return ApiResponse.onSuccess(conversation);
     }
 }
