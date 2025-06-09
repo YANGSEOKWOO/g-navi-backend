@@ -43,7 +43,7 @@ spec:
                     pathType: Prefix
                     backend:
                         service:
-                            name: gnavi-frontend
+                            name: gnavi4-frontend
                             port:
                                 number: 80
     tls:
