@@ -1,3 +1,4 @@
+# application-prod
 spring:
   sql:
     init:
@@ -14,7 +15,7 @@ spring:
 
   data:
     mongodb:
-      uri: ${MONGO_URL}
+      uri: ${MONGO_URI}
 #fastapi:
 #  base-url: ${FASTAPI_BASE_URL}
 #  endpoints:

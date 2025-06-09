@@ -19,32 +19,29 @@ spec:
           image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be@sha256:c90bb9231cbbe94e9ada06ed76ddcd7712aea6beb43411fca48feb8e32412e2d
           imagePullPolicy: Always
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
             - name: LOGGING_LEVEL_ROOT
               value: DEBUG
             - name: NAMESPACE
               value: sk-team-04
-            - name: SPRING_DB_HOST
+            - name: SPRING_DATASOURCE_URL
               valueFrom:
                 secretKeyRef:
                   name: prod-db-secret
-                  key: POSTGRE_HOST
-            - name: SPRING_DB_HOST
+                  key: POSTGRE_DB_URL
+            - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: prod-db-secret
-                  key: POSTGRE_HOST
-            - name: SPRING_DB_HOST
+                  key: POSTGRE_DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: prod-db-secret
-                  key: POSTGRE_HOST
-            - name: SPRING_DB_HOST
+                  key: POSTGRE_DB_PASSWORD
+            - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
                   name: prod-db-secret
-                  key: POSTGRE_HOST
-            - name: SPRING_DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: prod-db-secret
-                  key: POSTGRE_HOST
+                  key: MONGO_URI
