@@ -40,7 +40,7 @@ spec:
                 secretKeyRef:
                   name: prod-db-secret
                   key: POSTGRE_DB_PASSWORD
-            - name: MONGO_URI
+            - name: SPRING_DATA_MONGODB_URI  # 이름 변경!
               valueFrom:
                 secretKeyRef:
                   name: prod-db-secret

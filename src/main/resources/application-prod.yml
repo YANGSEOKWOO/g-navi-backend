@@ -12,10 +12,6 @@ spring:
     username: ${POSTGRE_DB_USERNAME}
     password: ${POSTGRE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-
-  data:
-    mongodb:
-      uri: ${MONGO_URI}
 #fastapi:
 #  base-url: ${FASTAPI_BASE_URL}
 #  endpoints:
