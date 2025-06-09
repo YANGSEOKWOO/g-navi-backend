@@ -16,10 +16,35 @@ spec:
       serviceAccountName: default
       containers:
         - name: webserver
-          image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be:1.0.0
+          image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be@sha256:c90bb9231cbbe94e9ada06ed76ddcd7712aea6beb43411fca48feb8e32412e2d
           imagePullPolicy: Always
           env:
             - name: LOGGING_LEVEL_ROOT
               value: DEBUG
             - name: NAMESPACE
               value: sk-team-04
+            - name: SPRING_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: prod-db-secret
+                  key: POSTGRE_HOST
+            - name: SPRING_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: prod-db-secret
+                  key: POSTGRE_HOST
+            - name: SPRING_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: prod-db-secret
+                  key: POSTGRE_HOST
+            - name: SPRING_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: prod-db-secret
+                  key: POSTGRE_HOST
+            - name: SPRING_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: prod-db-secret
+                  key: POSTGRE_HOST
