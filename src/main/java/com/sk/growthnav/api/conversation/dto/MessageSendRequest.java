@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+// Spring => FastAPI (Message)
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

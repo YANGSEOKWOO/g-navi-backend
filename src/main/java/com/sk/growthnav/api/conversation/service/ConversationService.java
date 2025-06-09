@@ -62,7 +62,7 @@ public class ConversationService {
     }
 
     /**
-     * 메시지 전송 및 AI 응답 처리
+     * 메시지 전송 및 AI 응답 처리 (member_info 없이 간단한 Message)
      */
     @Transactional
     public ConversationStartResponse sendMessage(MessageSendRequest request) {
@@ -85,6 +85,7 @@ public class ConversationService {
 
         return ConversationStartResponse.of(savedConversation.getId(), botResponse);
     }
+
 
     /**
      * 회원의 대화 목록 조회

@@ -2,6 +2,7 @@ package com.sk.growthnav.api.conversation.dto;
 
 // FastAPI 연동용 DTO
 // FastAPI에 보낼 데이터 구조
+// Spring -> FastAPI (Chat)
 
 import com.sk.growthnav.api.member.dto.MemberInfo;
 import com.sk.growthnav.api.project.dto.ProjectInfoDTO;

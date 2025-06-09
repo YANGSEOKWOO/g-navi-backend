@@ -15,3 +15,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGO_URL}
+#fastapi:
+#  base-url: ${FASTAPI_BASE_URL}
+#  endpoints:
+#    chat-room-create: /ai/room/c

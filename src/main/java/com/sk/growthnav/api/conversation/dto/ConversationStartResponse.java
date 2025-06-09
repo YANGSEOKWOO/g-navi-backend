@@ -1,5 +1,6 @@
 package com.sk.growthnav.api.conversation.dto;
 
+// FastAPi -> Spring (Message)
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
