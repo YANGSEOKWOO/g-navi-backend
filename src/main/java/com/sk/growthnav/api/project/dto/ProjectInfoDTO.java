@@ -15,9 +15,9 @@ import java.util.List;
 public class ProjectInfoDTO {
     Long projectId;
     String projectName;
-    String role;
+    String userRole;
     String domain;
-    String scale;
+    String projectScale;
     String startDate;
     String endDate;
     List<String> skills;
@@ -30,9 +30,9 @@ public class ProjectInfoDTO {
         return ProjectInfoDTO.builder()
                 .projectId(project.getId())
                 .projectName(project.getName())
-                .role(project.getUserRole())
+                .userRole(project.getUserRole())
                 .domain(project.getDomain())
-                .scale(project.getProjectScale().getLabel())
+                .projectScale(project.getProjectScale().getLabel())
                 .startDate(project.getStartDate() != null ?
                         project.getStartDate().format(DATE_FORMATTER) : null)
                 .endDate(project.getEndDate() != null ?

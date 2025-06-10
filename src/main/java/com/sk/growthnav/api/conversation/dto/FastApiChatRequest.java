@@ -20,7 +20,7 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FastApiChatRequest {
     String memberId;
-    String roomId; // conversationId
+    String conversationId; // conversationId
     Map<String, Object> userInfo;
 
     public static FastApiChatRequest of(MemberInfo member, String conversationId, List<ProjectInfoDTO> projects) {
@@ -30,7 +30,7 @@ public class FastApiChatRequest {
 
         return FastApiChatRequest.builder()
                 .memberId(String.valueOf(member.getMemberId()))
-                .roomId(conversationId)
+                .conversationId(conversationId)
                 .userInfo(userInfo)
                 .build();
     }

@@ -4,6 +4,10 @@ import com.sk.growthnav.api.home.service.HomeScreenFacadeService;
 import com.sk.growthnav.api.member.dto.*;
 import com.sk.growthnav.api.member.service.MemberService;
 import com.sk.growthnav.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +26,37 @@ public class MemberAutoController {
      * 회원가입
      * POST /api/auth/signup
      */
+    @Operation(
+            summary = "회원가입",
+            description = """
+                    새로운 사용자 계정을 생성합니다.
+                    
+                    **주요 기능:**
+                    - 이메일 중복 검사
+                    - 사용자 정보 등록
+                    - 회원 ID 자동 생성
+                    
+                    **참고사항:**
+                    - 이메일은 고유해야 함
+                    - 비밀번호는 4자 이상 권장
+                    """,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "회원가입 정보",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MemberSignupRequest.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "name": "홍길동",
+                                              "email": "hong@example.com",
+                                              "password": "password123"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    )
     @PostMapping("/signup")
     public ApiResponse<MemberSignupResponse> signup(@Valid @RequestBody MemberSignupRequest request) {
         log.info("회원가입 요청: email={}, name={}", request.getEmail(), request.getName());
@@ -36,6 +71,36 @@ public class MemberAutoController {
      * 로그인
      * POST /api/auth/login
      */
+    @Operation(
+            summary = "로그인",
+            description = """
+                    이메일과 비밀번호로 로그인합니다.
+                    
+                    **주요 기능:**
+                    - 이메일/비밀번호 검증
+                    - 회원 정보 반환
+                    - 세션 관리 (추후 JWT 토큰 예정)
+                    
+                    **참고사항:**
+                    - 로그인 성공 시 memberId를 반환
+                    - 이후 API 호출 시 memberId 사용
+                    """,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "로그인 정보",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MemberLoginRequest.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "email": "hong@example.com",
+                                              "password": "password123"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    )
     @PostMapping("/login")
     public ApiResponse<MemberLoginResponse> login(@Valid @RequestBody MemberLoginRequest request) {
         log.info("로그인 요청: email={}", request.getEmail());
@@ -64,6 +129,11 @@ public class MemberAutoController {
      * 홈 화면 데이터 조회
      * GET /api/auth/{memberId}/home
      */
+    @Operation(
+            summary = "홈 화면 데이터 조회",
+            description = """
+                    로그인 후 홈 화면에 표시할 사용자 정보를 조회합니다."""
+    )
     @GetMapping("/{memberId}/home")
     public ApiResponse<HomeScreenResponse> getHomeScreen(@PathVariable Long memberId) {
         log.info("홈 화면 데이터 요청: memberId={}", memberId);
