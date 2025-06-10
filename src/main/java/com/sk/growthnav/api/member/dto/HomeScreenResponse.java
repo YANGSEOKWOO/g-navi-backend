@@ -21,7 +21,7 @@ public class HomeScreenResponse {
     List<String> skills;
     List<String> projectNames;
 
-    RecentChat recentChat;
+    List<RecentChat> recentChats;
 
     @Getter
     @NoArgsConstructor
@@ -33,6 +33,7 @@ public class HomeScreenResponse {
         String title;           // "대화 1", "Growth Navigator 상담" 등
         LocalDateTime lastUpdated;
         boolean hasMessages;    // 메시지가 있는지 여부
+        int messageCount; // 메시지 개수
 
         public static RecentChat from(ConversationDocument conversation) {
             if (conversation == null) {
@@ -41,6 +42,7 @@ public class HomeScreenResponse {
                         .title("새로운 대화 시작")
                         .lastUpdated(null)
                         .hasMessages(false)
+                        .messageCount(0)
                         .build();
             }
 
@@ -52,6 +54,7 @@ public class HomeScreenResponse {
                     .title(title)
                     .lastUpdated(conversation.getUpdatedAt())
                     .hasMessages(!conversation.isEmpty())
+                    .messageCount(conversation.getMessageCount())
                     .build();
         }
 
@@ -65,11 +68,11 @@ public class HomeScreenResponse {
         }
     }
 
-    // 정적 팩토리 메서드
+    // 정적 팩토리 메서드 - 리스트로 변경
     public static HomeScreenResponse of(
             String userName,
             List<ProjectInfoDTO> projects,
-            ConversationDocument recentConversation) {
+            List<ConversationDocument> recentConversations) {
 
         // 1. 프로젝트 이름 목록 추출
         List<String> projectNames = projects.stream()
@@ -86,14 +89,16 @@ public class HomeScreenResponse {
                 .sorted() // 알파벳 순으로 정렬
                 .collect(Collectors.toList());
 
-        // 3. 최근 대화 정보
-        RecentChat recentChat = RecentChat.from(recentConversation);
+        // 3. 최근 대화 목록 변환
+        List<RecentChat> recentChats = recentConversations.stream()
+                .map(RecentChat::from)
+                .collect(Collectors.toList());
 
         return HomeScreenResponse.builder()
                 .userName(userName)
                 .skills(skills)
                 .projectNames(projectNames)
-                .recentChat(recentChat)
+                .recentChats(recentChats) // 변경된 필드명
                 .build();
     }
 }

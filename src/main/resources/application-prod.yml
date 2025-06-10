@@ -16,3 +16,6 @@ spring:
     data:
       mongodb:
         uri: ${MONGO_URI}
+fastapi:
+  base-url: ${FASTAPI_URL}
+  timeout: 30000

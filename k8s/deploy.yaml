@@ -43,3 +43,8 @@ spec:
                 secretKeyRef:
                   name: prod-db-secret
                   key: MONGO_URI
+            - name: FASTAPI_URL
+              valueFrom:
+                secretKeyRef:
+                  name: prod-db-secret
+                  key: FASTAPI_URL

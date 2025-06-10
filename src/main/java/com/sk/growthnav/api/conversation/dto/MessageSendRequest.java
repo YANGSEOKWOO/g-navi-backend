@@ -2,10 +2,7 @@ package com.sk.growthnav.api.conversation.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 // Spring => FastAPI (Message)
@@ -13,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MessageSendRequest {
 

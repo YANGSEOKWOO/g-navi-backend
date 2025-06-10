@@ -201,20 +201,13 @@ public class ConversationController {
     )
     @PostMapping("/{conversation_id}/messages")
     public ApiResponse<ConversationStartResponse> sendMessage(
-            @PathVariable String conversationId,
+            @PathVariable("conversation_id") String conversationId,
             @Valid @RequestBody MessageSendRequest request) {
-
-        // 경로의 chatroomId와 요청 body의 conversationId 일치 검증
-        if (!conversationId.equals(request.getConversationId())) {
-            throw new IllegalArgumentException("경로의 채팅방 ID와 요청 데이터의 대화 ID가 일치하지 않습니다.");
-        }
-
-        log.info("메시지 전송: chatroomId={}, memberId={}, message={}",
-                conversationId, request.getMemberId(), request.getMessageText());
+        
+        log.info("메시지 전송: conversationId={}, memberId={}, message={}",
+                request.getConversationId(), request.getMemberId(), request.getMessageText());
 
         ConversationStartResponse response = conversationService.sendMessage(request);
-
-        log.info("메시지 전송 완료: chatroomId={}", conversationId);
         return ApiResponse.onSuccess(response);
     }
 
@@ -224,7 +217,7 @@ public class ConversationController {
      */
     @GetMapping("/{conversation_id}/messages")
     public ApiResponse<ConversationDocument> getChatroomMessages(
-            @PathVariable String conversationId,
+            @PathVariable("conversation_id") String conversationId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 

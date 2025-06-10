@@ -37,29 +37,32 @@ public class HomeScreenFacadeService {
         // 2. 회원의 프로젝트 목록 조회 (스킬 포함)
         List<ProjectInfoDTO> projects = projectService.getProjectsByMember(memberId);
 
-        // 3. 최근 대화 조회 (가장 최근 업데이트된 대화 1개)
-        ConversationDocument recentConversation = getRecentConversation(memberId);
+        // 3. 최근 대화 목록 조회 (모든 대화)
+        List<ConversationDocument> recentConversations = getRecentConversations(memberId);
 
         // 4. 홈 화면 응답 생성
-        HomeScreenResponse homeScreen = HomeScreenResponse.of(userName, projects, recentConversation);
+        HomeScreenResponse homeScreen = HomeScreenResponse.of(userName, projects, recentConversations);
 
-        log.info("홈 화면 조회 완료: memberId={}, skillCount={}, projectCount={}, hasRecentChat={}",
-                memberId, homeScreen.getSkills().size(), homeScreen.getProjectNames().size(),
-                homeScreen.getRecentChat().isHasMessages());
+        log.info("홈 화면 조회 완료: memberId={}, skillCount={}, projectCount={}, conversationCount={}",
+                memberId,
+                homeScreen.getSkills() != null ? homeScreen.getSkills().size() : 0,
+                homeScreen.getProjectNames() != null ? homeScreen.getProjectNames().size() : 0,
+                homeScreen.getRecentChats() != null ? homeScreen.getRecentChats().size() : 0);
 
         return homeScreen;
     }
 
     /**
-     * 회원의 가장 최근 대화 조회
+     * 회원의 모든 최근 대화 조회
      */
-    private ConversationDocument getRecentConversation(Long memberId) {
+    private List<ConversationDocument> getRecentConversations(Long memberId) {
         try {
             List<ConversationDocument> conversations = conversationService.getConversationsByMember(memberId);
-            return conversations.isEmpty() ? null : conversations.get(0);
+            log.debug("최근 대화 조회 성공: memberId={}, conversationCount={}", memberId, conversations.size());
+            return conversations;
         } catch (Exception e) {
             log.warn("최근 대화 조회 중 오류: memberId={}, error={}", memberId, e.getMessage());
-            return null;
+            return List.of(); // 빈 리스트 반환
         }
     }
 }

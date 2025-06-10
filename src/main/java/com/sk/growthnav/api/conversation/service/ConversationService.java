@@ -6,6 +6,7 @@ import com.sk.growthnav.api.conversation.dto.ConversationStartResponse;
 import com.sk.growthnav.api.conversation.dto.FastApiChatRequest;
 import com.sk.growthnav.api.conversation.dto.MessageSendRequest;
 import com.sk.growthnav.api.conversation.repository.ConversationRepository;
+import com.sk.growthnav.api.external.service.FastApiService;
 import com.sk.growthnav.api.member.dto.MemberInfo;
 import com.sk.growthnav.api.member.service.MemberService;
 import com.sk.growthnav.api.project.dto.ProjectInfoDTO;
@@ -27,7 +28,8 @@ public class ConversationService {
     private final ConversationRepository conversationRepository;
     private final MemberService memberService;
     private final ProjectService projectService;
-    // private final FastApiService fastApiService;  // Issue #4에서 구현
+    private final FastApiService fastApiService;
+    // private final com.sk.growthnav.api.external.service.FastApiService fastApiService;  // Issue #4에서 구현
 
     /**
      * 새로운 대화 시작 또는 기존 대화 이어가기
@@ -130,46 +132,64 @@ public class ConversationService {
     }
 
     /**
-     * FastAPI 초기 응답 요청 (Issue #14에서 실제 구현)
+     * FastAPI 초기 응답 요청 (실제 구현)
      */
     private String callFastApiForInitialResponse(ConversationDocument conversation, boolean isNewConversation) {
-        // TODO: Issue #4에서 FastApiService 구현 후 실제 호출
-
         try {
-            // 사용자 정보 조회
+            // 1. 사용자 정보 조회
             MemberInfo memberInfo = memberService.getMemberInfo(conversation.getMemberId());
             List<ProjectInfoDTO> projects = projectService.getProjectsByMember(conversation.getMemberId());
 
-            // FastAPI 요청 데이터 구성
-            FastApiChatRequest fastApiRequest = FastApiChatRequest.of(memberInfo, conversation.getId(), projects);
+            // 2. FastAPI 요청 데이터 구성
+            FastApiChatRequest fastApiRequest = FastApiChatRequest.of(memberInfo, conversation, projects);
 
-            // 임시 응답 (실제로는 FastAPI 호출)
-            if (isNewConversation) {
-                return String.format("안녕하세요 %s님! Growth Navigator에 오신 것을 환영합니다. 무엇을 도와드릴까요?",
-                        memberInfo.getName());
-            } else {
-                return "이전 대화를 이어가겠습니다. 어떤 도움이 필요하신가요?";
-            }
+            // 3. FastAPI 채팅방 생성/로드 호출 (POST /ai/chatroom)
+            String botResponse = fastApiService.createOrLoadChatroom(fastApiRequest);
+
+            log.info("FastAPI 초기 응답 완료: memberId={}, isNew={}, responseLength={}",
+                    conversation.getMemberId(), isNewConversation, botResponse.length());
+
+            return botResponse;
 
         } catch (Exception e) {
-            log.error("FastAPI 호출 중 오류 발생", e);
-            return "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+            log.error("FastAPI 초기 응답 중 오류: conversationId={}, isNew={}, error={}",
+                    conversation.getId(), isNewConversation, e.getMessage(), e);
+
+            // 폴백 메시지
+            MemberInfo memberInfo = memberService.getMemberInfo(conversation.getMemberId());
+            if (isNewConversation) {
+                return String.format("안녕하세요 %s님! Growth Navigator에 오신 것을 환영합니다. " +
+                                "현재 AI 서비스에 일시적인 문제가 있어 기본 응답을 드리고 있습니다. 무엇을 도와드릴까요?",
+                        memberInfo.getName());
+            } else {
+                return "이전 대화를 이어가겠습니다. 현재 AI 서비스에 일시적인 문제가 있습니다. 어떤 도움이 필요하신가요?";
+            }
         }
     }
 
     /**
-     * FastAPI 메시지 응답 요청 (Issue #14에서 실제 구현)
+     * FastAPI 메시지 응답 요청 (실제 구현)
      */
     private String callFastApiForMessage(ConversationDocument conversation, String userMessage) {
-        // TODO: Issue #4에서 FastApiService 구현 후 실제 호출
-
         try {
-            // 임시 응답 (실제로는 FastAPI 호출)
-            return "사용자의 메시지 '" + userMessage + "'에 대한 AI 응답입니다. (임시 응답)";
+            // FastAPI 메시지 전송 호출 (POST /ai/chatroom/{conversation_id}/messages)
+            String botResponse = fastApiService.sendMessage(
+                    conversation.getId(),
+                    userMessage,
+                    String.valueOf(conversation.getMemberId())
+            );
+
+            log.info("FastAPI 메시지 응답 완료: conversationId={}, userMessageLength={}, responseLength={}",
+                    conversation.getId(), userMessage.length(), botResponse.length());
+
+            return botResponse;
 
         } catch (Exception e) {
-            log.error("FastAPI 메시지 처리 중 오류 발생", e);
-            return "죄송합니다. 메시지 처리 중 오류가 발생했습니다.";
+            log.error("FastAPI 메시지 응답 중 오류: conversationId={}, userMessage={}, error={}",
+                    conversation.getId(), userMessage, e.getMessage(), e);
+
+            // 폴백 메시지
+            return "죄송합니다. 현재 AI 서비스에 일시적인 문제가 있습니다. 잠시 후 다시 시도해주세요.";
         }
     }
 
