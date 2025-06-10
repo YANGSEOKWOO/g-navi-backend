@@ -4,10 +4,7 @@ package com.sk.growthnav.api.project.entity;
 import com.sk.growthnav.api.member.entity.Member;
 import com.sk.growthnav.global.base.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Builder
 public class Project extends BaseEntity {
 
     @Id
@@ -44,5 +42,19 @@ public class Project extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
+
+    public static Project create(String name, String userRole, String domain,
+                                 ProjectScale projectScale, LocalDateTime startDate,
+                                 LocalDateTime endDate, Member member) {
+        return Project.builder()
+                .name(name)
+                .userRole(userRole)
+                .domain(domain)
+                .projectScale(projectScale)
+                .startDate(startDate)
+                .endDate(endDate)
+                .member(member)
+                .build();
+    }
 
 }
