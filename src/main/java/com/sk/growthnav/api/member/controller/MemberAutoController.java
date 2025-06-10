@@ -1,9 +1,7 @@
 package com.sk.growthnav.api.member.controller;
 
-import com.sk.growthnav.api.member.dto.MemberLoginRequest;
-import com.sk.growthnav.api.member.dto.MemberLoginResponse;
-import com.sk.growthnav.api.member.dto.MemberSignupRequest;
-import com.sk.growthnav.api.member.dto.MemberSignupResponse;
+import com.sk.growthnav.api.home.service.HomeScreenFacadeService;
+import com.sk.growthnav.api.member.dto.*;
 import com.sk.growthnav.api.member.service.MemberService;
 import com.sk.growthnav.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberAutoController {
 
     private final MemberService memberService;
+    private final HomeScreenFacadeService homeScreenFacadeService; // 추가
 
     /**
      * 회원가입
@@ -59,5 +58,20 @@ public class MemberAutoController {
 
         log.info("이메일 중복 확인 결과: email={}, exists={}", email, exists);
         return ApiResponse.onSuccess(exists);
+    }
+
+    /**
+     * 홈 화면 데이터 조회
+     * GET /api/auth/{memberId}/home
+     */
+    @GetMapping("/{memberId}/home")
+    public ApiResponse<HomeScreenResponse> getHomeScreen(@PathVariable Long memberId) {
+        log.info("홈 화면 데이터 요청: memberId={}", memberId);
+
+        // Facade 서비스 사용으로 변경
+        HomeScreenResponse homeScreen = homeScreenFacadeService.getHomeScreenData(memberId);
+
+        log.info("홈 화면 데이터 응답 완료: memberId={}", memberId);
+        return ApiResponse.onSuccess(homeScreen);
     }
 }

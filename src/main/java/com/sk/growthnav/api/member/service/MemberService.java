@@ -4,7 +4,6 @@ import com.sk.growthnav.api.member.dto.*;
 import com.sk.growthnav.api.member.entity.Member;
 import com.sk.growthnav.api.member.repository.MemberRepository;
 import com.sk.growthnav.global.apiPayload.code.FailureCode;
-import com.sk.growthnav.global.base.FailureException;
 import com.sk.growthnav.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,31 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @Slf4j
 public class MemberService {
+
     private final MemberRepository memberRepository;
-
-    /**
-     * 회원 ID로 회원 정보 조회 (읽기 전용)
-     */
-    public Member findById(Long memberId) {
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> new FailureException(FailureCode.MEMBER_NOT_FOUND));
-    }
-
-    /**
-     * 회원 ID로 회원 정보 DTO 조회 (읽기 전용)
-     */
-    public MemberInfo getMemberInfo(Long memberId) {
-        Member member = findById(memberId);
-        log.info("회원 정보 조회 완료: memberId={}, name={}", memberId, member.getName());
-        return MemberInfo.from(member);
-    }
-
-    /**
-     * 이메일 중복 확인 (읽기 전용)
-     */
-    public boolean isEmailExists(String email) {
-        return memberRepository.existsByEmail(email);
-    }
+    // ConversationService 의존성 제거!
 
     /**
      * 회원가입
@@ -55,11 +32,11 @@ public class MemberService {
             throw new GeneralException(FailureCode.MEMBER_EMAIL_DUPLICATED);
         }
 
-        // Member 엔티티 생성
+        // Member 엔티티 생성 (패스워드는 단순 저장 - 실제 운영에서는 암호화 필요)
         Member member = new Member(
                 null, // ID는 자동 생성
                 request.getName(),
-                request.getPassword(),
+                request.getPassword(), // TODO: 실제로는 BCrypt 등으로 암호화
                 request.getEmail()
         );
 
@@ -90,5 +67,31 @@ public class MemberService {
 
         log.info("로그인 완료: memberId={}, email={}", member.getId(), member.getEmail());
         return MemberLoginResponse.of(member.getId(), member.getName(), member.getEmail());
+    }
+
+    /**
+     * 회원 ID로 조회
+     */
+    public Member findById(Long memberId) {
+        log.debug("회원 조회: memberId={}", memberId);
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(FailureCode.MEMBER_NOT_FOUND));
+    }
+
+    /**
+     * 회원 정보 조회 (FastAPI 연동용)
+     */
+    public MemberInfo getMemberInfo(Long memberId) {
+        log.debug("회원 정보 조회: memberId={}", memberId);
+        Member member = findById(memberId);
+        return MemberInfo.from(member);
+    }
+
+    /**
+     * 이메일 중복 확인
+     */
+    public boolean isEmailExists(String email) {
+        log.debug("이메일 중복 확인: email={}", email);
+        return memberRepository.existsByEmail(email);
     }
 }

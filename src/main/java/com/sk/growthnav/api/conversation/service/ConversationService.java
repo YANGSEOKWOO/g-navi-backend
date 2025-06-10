@@ -38,7 +38,7 @@ public class ConversationService {
                 request.getMemberId(), request.getConversationId());
 
         ConversationDocument conversation;
-        boolean isNewConversation = request.getConversationId() == null;
+        boolean isNewConversation = isNullOrEmpty(request.getConversationId());
 
         if (isNewConversation) {
             // 새로운 대화 생성
@@ -188,5 +188,15 @@ public class ConversationService {
 
         log.info("채팅방 삭제 완료: conversationId={}, messageCount={}",
                 conversationId, conversation.getMessageCount());
+    }
+
+    /**
+     * 빈칸도 NUll로 인식
+     *
+     * @param str
+     * @return
+     */
+    private boolean isNullOrEmpty(String str) {
+        return str == null || str.trim().isEmpty();
     }
 }
