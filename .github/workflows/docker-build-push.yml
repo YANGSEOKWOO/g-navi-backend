@@ -4,17 +4,14 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-
 env:
   IMAGE_REGISTRY: amdp-registry.skala-ai.com/skala25a
   IMAGE_NAME: sk-gnavi4-be
   DOCKER_CREDENTIAL_ID: skala-image-registry-id
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # 전체 작업 타임아웃 설정
-
+    timeout-minutes: 30
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -25,7 +22,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Gradle 캐싱을 더 세밀하게 제어
       - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
@@ -39,24 +35,20 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
         with:
-          # 캐시 설정 최적화
           cache-disabled: false
           cache-read-only: false
           cache-write-only: false
-          # Gradle 데몬 비활성화로 메모리 사용량 감소
           arguments: --no-daemon
 
-      # Gradle 래퍼 실행 권한 확인
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 의존성 다운로드를 별도 단계로 분리
       - name: Download dependencies
         run: ./gradlew dependencies --no-daemon
 
       - name: Build JAR
         run: ./gradlew build -x test --no-daemon --build-cache
-        timeout-minutes: 15  # 빌드 단계별 타임아웃
+        timeout-minutes: 15
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -68,24 +60,19 @@ jobs:
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
 
-      - name: Generate image tag
-        id: generate_tag
-        run: |
-          BUILD_NUMBER="${{ github.run_number }}"
-          HASH=$(date +%s%N | sha256sum | cut -c1-12)
-          FINAL_IMAGE_TAG="${BUILD_NUMBER}-${HASH}"
-          echo "FINAL_IMAGE_TAG=$FINAL_IMAGE_TAG" >> $GITHUB_ENV
-          echo "Final Tag: $FINAL_IMAGE_TAG"
-
-      # Docker 빌드 최적화 - 멀티스테이지 빌드와 캐시 활용
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.FINAL_IMAGE_TAG }}
+          tags: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # 빌드 타임아웃 설정
         timeout-minutes: 10
+
+      - name: Build completed
+        run: |
+          echo "✅ Docker image successfully built and pushed!"
+          echo "📦 Image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "🚀 ArgoCD will automatically detect and deploy this new image"

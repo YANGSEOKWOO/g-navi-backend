@@ -16,7 +16,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: webserver
-          image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be:36-3efa9cf3192d
+          image: amdp-registry.skala-ai.com/skala25a/sk-gnavi4-be:latest
           imagePullPolicy: Always
           env:
             - name: SPRING_PROFILES_ACTIVE
