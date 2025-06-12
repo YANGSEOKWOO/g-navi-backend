@@ -7,10 +7,10 @@ import com.sk.growthnav.api.conversation.dto.MessageSendRequest;
 import com.sk.growthnav.api.conversation.service.ConversationService;
 import com.sk.growthnav.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "채팅방 Conversation")
 @RestController
 @RequestMapping("/api/conversations")  // 더 직관적인 경로
 @RequiredArgsConstructor
@@ -174,14 +175,6 @@ public class ConversationController {
                     - 메시지는 실시간으로 대화에 추가됨
                     - AI 응답은 사용자의 프로젝트/스킬 정보를 고려하여 생성
                     """,
-            parameters = {
-                    @Parameter(
-                            name = "chatroomId",
-                            description = "채팅방 ID",
-                            example = "conv_abc123def456",
-                            required = true
-                    )
-            },
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "메시지 전송 요청",
                     content = @Content(
@@ -203,7 +196,7 @@ public class ConversationController {
     public ApiResponse<ConversationStartResponse> sendMessage(
             @PathVariable("conversation_id") String conversationId,
             @Valid @RequestBody MessageSendRequest request) {
-        
+
         log.info("메시지 전송: conversationId={}, memberId={}, message={}",
                 request.getConversationId(), request.getMemberId(), request.getMessageText());
 
