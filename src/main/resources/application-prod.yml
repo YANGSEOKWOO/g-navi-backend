@@ -1,3 +1,4 @@
+# application-prod
 spring:
   sql:
     init:
@@ -7,15 +8,20 @@ spring:
       on-profile: prod
 
   datasource:
+    hikari:
+      max-lifetime: 600000        # 10분 (기본값 30분에서 단축)
+      connection-timeout: 20000   # 20초
+      idle-timeout: 300000        # 5분
+      validation-timeout: 5000    # 5초
+      leak-detection-threshold: 60000  # 1분
     url: ${POSTGRE_DB_URL}
     username: ${POSTGRE_DB_USERNAME}
     password: ${POSTGRE_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-  data:
-    mongodb:
-      uri: ${MONGO_URL}
-#fastapi:
-#  base-url: ${FASTAPI_BASE_URL}
-#  endpoints:
-#    chat-room-create: /ai/room/c
+    data:
+      mongodb:
+        uri: ${MONGO_URI}
+fastapi:
+  base-url: ${FASTAPI_URL}
+  timeout: 30000
