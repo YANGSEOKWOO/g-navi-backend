@@ -2,6 +2,7 @@ package com.sk.growthnav.api.member.service;
 
 import com.sk.growthnav.api.member.dto.*;
 import com.sk.growthnav.api.member.entity.Member;
+import com.sk.growthnav.api.member.entity.MemberRole;
 import com.sk.growthnav.api.member.repository.MemberRepository;
 import com.sk.growthnav.global.apiPayload.code.FailureCode;
 import com.sk.growthnav.global.exception.GeneralException;
@@ -33,13 +34,13 @@ public class MemberService {
         }
 
         // Member 엔티티 생성 (패스워드는 단순 저장 - 실제 운영에서는 암호화 필요)
-        Member member = new Member(
-                null, // ID는 자동 생성
-                request.getName(),
-                request.getPassword(), // TODO: 실제로는 BCrypt 등으로 암호화
-                request.getEmail()
-        );
-
+        Member member = Member.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .role(MemberRole.USER)
+                .isExpert(false)
+                .build();
         Member savedMember = memberRepository.save(member);
         log.info("회원가입 완료: memberId={}, email={}", savedMember.getId(), savedMember.getEmail());
 

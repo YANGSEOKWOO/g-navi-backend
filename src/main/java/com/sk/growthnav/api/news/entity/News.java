@@ -24,9 +24,11 @@ public class News extends BaseEntity {
     @Column(nullable = false, length = 500)
     private String url;
 
+    // isRegistered 대신 status 사용
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private Boolean isRegisterd = true;
+    private NewsStatus status = NewsStatus.PENDING;  // 기본값: 승인 대기
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "writer_id", nullable = false)
@@ -38,8 +40,31 @@ public class News extends BaseEntity {
         this.url = url;
     }
 
-    // 등록 상태 변경
-    public void toggleRegistration() {
-        this.isRegisterd = !this.isRegisterd;
+    // 승인 처리
+    public void approve() {
+        this.status = NewsStatus.APPROVED;
+    }
+
+    // 승인 해제 (등록된 기사를 다시 대기상태로)
+    public void unapprove() {
+        this.status = NewsStatus.PENDING;
+    }
+
+    // 거부/삭제 처리
+    public void reject() {
+        this.status = NewsStatus.REJECTED;
+    }
+
+    // 상태 확인 메서드들
+    public boolean isApproved() {
+        return this.status == NewsStatus.APPROVED;
+    }
+
+    public boolean isPending() {
+        return this.status == NewsStatus.PENDING;
+    }
+
+    public boolean isRejected() {
+        return this.status == NewsStatus.REJECTED;
     }
 }

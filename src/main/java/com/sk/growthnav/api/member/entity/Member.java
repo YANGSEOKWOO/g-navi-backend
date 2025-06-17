@@ -32,18 +32,18 @@ public class Member extends BaseEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean isExert = false;
+    private Boolean isExpert = false;
 
     // 역할 변경 메서드
     public void changeRole(MemberRole newRole) {
         this.role = newRole;
-        this.isExert = (newRole == MemberRole.WRITER);
+        this.isExpert = (newRole == MemberRole.WRITER);
     }
 
 
     // 전문가 여부 확인
-    public boolean isExert() {
-        return this.isExert;
+    public boolean isExpert() {
+        return this.isExpert;
     }
 
     // 관리자 여부 확인
