@@ -46,6 +46,9 @@ dependencies {
     // 테스트용 임베디드 MongoDB (선택사항)
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.9.0'
 
+    // JSoup for web scraping
+    implementation 'org.jsoup:jsoup:1.17.2'
+
 }
 
 tasks.named('test') {
