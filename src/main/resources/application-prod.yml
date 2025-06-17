@@ -25,3 +25,15 @@ spring:
 fastapi:
   base-url: ${FASTAPI_URL}
   timeout: 30000
+
+# 운영 환경 전용 설정
+admin:
+  default:
+    email: ${ADMIN_EMAIL:admin@gnavi.com}
+    password: ${ADMIN_PASSWORD:}  # 환경변수에서 주입
+    name: ${ADMIN_NAME:Growth Navigator 관리자}
+
+data:
+  initialization:
+    enabled: ${DATA_INIT_ENABLED:false}  # 운영에서는 기본 비활성화
+    mode: ${DATA_INIT_MODE:minimal}      # 최소한의 데이터만
