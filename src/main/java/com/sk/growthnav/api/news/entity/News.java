@@ -26,7 +26,7 @@ public class News extends BaseEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean isRegisterd = true;
+    private Boolean isRegistered = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "writer_id", nullable = false)
@@ -40,6 +40,6 @@ public class News extends BaseEntity {
 
     // 등록 상태 변경
     public void toggleRegistration() {
-        this.isRegisterd = !this.isRegisterd;
+        this.isRegistered = !this.isRegistered;
     }
 }
