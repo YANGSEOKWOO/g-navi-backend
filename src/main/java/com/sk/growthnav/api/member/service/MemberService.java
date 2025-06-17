@@ -39,7 +39,7 @@ public class MemberService {
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .role(MemberRole.USER)
-                .isExert(false)
+                .isExpert(false)
                 .build();
         Member savedMember = memberRepository.save(member);
         log.info("회원가입 완료: memberId={}, email={}", savedMember.getId(), savedMember.getEmail());
