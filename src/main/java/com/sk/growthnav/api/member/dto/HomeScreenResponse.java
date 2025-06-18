@@ -2,6 +2,7 @@ package com.sk.growthnav.api.member.dto;
 
 import com.sk.growthnav.api.conversation.document.ConversationDocument;
 import com.sk.growthnav.api.project.dto.ProjectInfoDTO;
+import com.sk.growthnav.global.document.SenderType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -59,12 +60,96 @@ public class HomeScreenResponse {
         }
 
         private static String generateChatTitle(ConversationDocument conversation) {
-            // conversationId의 뒷부분을 사용해서 간단한 제목 생성
+            if (conversation == null || conversation.getMessages().isEmpty()) {
+                return "새로운 대화";
+            }
+
+            // 1. 첫 번째 사용자 메시지를 제목으로 사용 (가장 자연스러움)
+            ConversationDocument.MessageDocument firstUserMessage = conversation.getMessages().stream()
+                    .filter(msg -> msg.getSenderType() == SenderType.USER)
+                    .findFirst()
+                    .orElse(null);
+
+            if (firstUserMessage != null) {
+                String messageText = firstUserMessage.getMessageText();
+                if (messageText != null && !messageText.trim().isEmpty()) {
+                    // 제목 길이 제한 및 정리
+                    String title = messageText.trim();
+
+                    // 30자로 제한하고 말줄임표 추가
+                    if (title.length() > 30) {
+                        title = title.substring(0, 27) + "...";
+                    }
+
+                    // 줄바꿈 제거
+                    title = title.replaceAll("[\\r\\n\\t]", " ");
+                    title = title.replaceAll("\\s+", " ");
+
+                    return title;
+                }
+            }
+
+            // 2. 첫 번째 메시지가 없으면 마지막 사용자 메시지 사용
+            ConversationDocument.MessageDocument lastUserMessage = conversation.getLastUserMessage();
+            if (lastUserMessage != null) {
+                String messageText = lastUserMessage.getMessageText();
+                if (messageText != null && !messageText.trim().isEmpty()) {
+                    String title = messageText.trim();
+                    if (title.length() > 30) {
+                        title = title.substring(0, 27) + "...";
+                    }
+                    title = title.replaceAll("[\\r\\n\\t]", " ");
+                    title = title.replaceAll("\\s+", " ");
+                    return title;
+                }
+            }
+
+            // 3. 사용자 메시지가 없으면 conversationId 기반 (기존 로직)
             String id = conversation.getId();
             if (id != null && id.length() > 8) {
-                return "대화 " + id.substring(id.length() - 4); // 마지막 4자리
+                return "대화 " + id.substring(id.length() - 4);
             }
+
+            // 4. 최종 폴백
             return "Growth Navigator 상담";
+        }
+
+        private static String generateSmartChatTitle(ConversationDocument conversation) {
+            if (conversation == null || conversation.getMessages().isEmpty()) {
+                return "새로운 대화";
+            }
+
+            String firstUserMessage = conversation.getMessages().stream()
+                    .filter(msg -> msg.getSenderType() == SenderType.USER)
+                    .findFirst()
+                    .map(ConversationDocument.MessageDocument::getMessageText)
+                    .orElse("");
+
+            if (firstUserMessage.isEmpty()) {
+                return generateChatTitle(conversation); // 기본 로직으로 폴백
+            }
+
+            // 키워드 기반 제목 생성
+            String message = firstUserMessage.toLowerCase();
+
+            if (message.contains("프로젝트") || message.contains("project")) {
+                return "프로젝트 상담";
+            } else if (message.contains("커리어") || message.contains("경력") || message.contains("career")) {
+                return "커리어 상담";
+            } else if (message.contains("스킬") || message.contains("기술") || message.contains("skill")) {
+                return "기술 상담";
+            } else if (message.contains("성장") || message.contains("발전")) {
+                return "성장 상담";
+            } else if (message.contains("이직") || message.contains("취업")) {
+                return "취업 상담";
+            } else {
+                // 키워드가 없으면 첫 30자 사용
+                String title = firstUserMessage.trim();
+                if (title.length() > 30) {
+                    title = title.substring(0, 27) + "...";
+                }
+                return title.replaceAll("[\\r\\n\\t]", " ").replaceAll("\\s+", " ");
+            }
         }
     }
 
