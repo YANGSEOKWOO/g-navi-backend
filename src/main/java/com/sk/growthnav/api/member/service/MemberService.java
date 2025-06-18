@@ -67,7 +67,7 @@ public class MemberService {
         }
 
         log.info("로그인 완료: memberId={}, email={}", member.getId(), member.getEmail());
-        return MemberLoginResponse.of(member.getId(), member.getName(), member.getEmail());
+        return MemberLoginResponse.of(member.getId(), member.getName(), member.getEmail(), member.getRole(), member.getIsExpert());
     }
 
     /**
