@@ -7,6 +7,7 @@ import com.sk.growthnav.api.conversation.dto.MessageSendRequest;
 import com.sk.growthnav.api.conversation.service.ConversationService;
 import com.sk.growthnav.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -144,8 +145,10 @@ public class ConversationController {
      * 채팅방 삭제
      * DELETE /api/chatrooms/{chatroom_id}
      */
-    @DeleteMapping("/{conversation_id}")
-    public ApiResponse<String> deleteChatroom(@PathVariable String conversationId) {
+    @DeleteMapping("/{conversationId}")
+    public ApiResponse<String> deleteChatroom(
+            @Parameter(description = "삭제할 대화 ID", required = true, example = "conv_abc123def456")
+            @PathVariable String conversationId) {
 
         log.info("채팅방 삭제 요청: conversationId={}", conversationId);
 
