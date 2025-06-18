@@ -51,17 +51,17 @@ public class MockDataInitializer {
     private void createMinimalData() {
         log.info("📋 최소한의 목업 데이터 생성...");
 
-        // 기본 Writer 1명만 생성
-        if (!memberRepository.existsByRole(MemberRole.WRITER)) {
-            Member writer = Member.builder()
+        // 기본 EXPERT 1명만 생성
+        if (!memberRepository.existsByRole(MemberRole.EXPERT)) {
+            Member expert = Member.builder()
                     .name("기본 작성자")
-                    .email("writer@gnavi.com")
-                    .password("writer123")
-                    .role(MemberRole.WRITER)
+                    .email("expert@gnavi.com")
+                    .password("expert123")
+                    .role(MemberRole.EXPERT)
                     .isExpert(true)
                     .build();
-            memberRepository.save(writer);
-            log.info("✅ 기본 Writer 계정 생성: {}", writer.getEmail());
+            memberRepository.save(expert);
+            log.info("✅ 기본 Expert 계정 생성: {}", expert.getEmail());
         }
     }
 
@@ -93,10 +93,10 @@ public class MockDataInitializer {
         }
 
         List<Member> members = List.of(
-                Member.builder().name("김효준").email("writer1@test.com").password("test123")
-                        .role(MemberRole.WRITER).isExpert(true).build(),
-                Member.builder().name("양석우").email("writer2@test.com").password("test123")
-                        .role(MemberRole.WRITER).isExpert(true).build(),
+                Member.builder().name("김효준").email("expert1@test.com").password("test123")
+                        .role(MemberRole.EXPERT).isExpert(true).build(),
+                Member.builder().name("양석우").email("expert2@test.com").password("test123")
+                        .role(MemberRole.EXPERT).isExpert(true).build(),
                 Member.builder().name("이민수").email("user1@test.com").password("test123")
                         .role(MemberRole.USER).isExpert(false).build(),
                 Member.builder().name("박지영").email("user2@test.com").password("test123")
@@ -187,12 +187,12 @@ public class MockDataInitializer {
             return;
         }
 
-        List<Member> writers = members.stream()
-                .filter(m -> m.getRole() == MemberRole.WRITER)
+        List<Member> experts = members.stream()
+                .filter(m -> m.getRole() == MemberRole.EXPERT)
                 .toList();
 
-        if (writers.isEmpty()) {
-            log.warn("Writer가 없어서 목업 뉴스를 생성할 수 없습니다.");
+        if (experts.isEmpty()) {
+            log.warn("Expert가 없어서 목업 뉴스를 생성할 수 없습니다.");
             return;
         }
 
@@ -201,19 +201,19 @@ public class MockDataInitializer {
                         .title("메타의 AI 앱 프라이버시 악몽, 사적인 대화 노출")
                         .url("https://news.naver.com/main/read.naver?mode=LSD&mid=sec&sid1=105&oid=001&aid=0014123456")
                         .status(NewsStatus.APPROVED)
-                        .writer(writers.get(0))
+                        .expert(experts.get(0))
                         .build(),
                 News.builder()
                         .title("기업의 AI 노력이 실패하는 11가지 흔한 이유")
                         .url("https://news.naver.com/main/read.naver?mode=LSD&mid=sec&sid1=105&oid=002&aid=0014789012")
                         .status(NewsStatus.APPROVED)
-                        .writer(writers.size() > 1 ? writers.get(1) : writers.get(0))
+                        .expert(experts.size() > 1 ? experts.get(1) : experts.get(0))
                         .build(),
                 News.builder()
                         .title("2025년 개발자가 주목해야 할 기술 트렌드")
                         .url("https://news.naver.com/main/read.naver?mode=LSD&mid=sec&sid1=105&oid=003&aid=0014345678")
                         .status(NewsStatus.PENDING)
-                        .writer(writers.get(0))
+                        .expert(experts.get(0))
                         .build()
         );
 

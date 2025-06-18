@@ -31,8 +31,8 @@ public class News extends BaseEntity {
     private NewsStatus status = NewsStatus.PENDING;  // 기본값: 승인 대기
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "writer_id", nullable = false)
-    private Member writer; // Writer 또는 Admin
+    @JoinColumn(name = "expert_id", nullable = false)
+    private Member expert; // EXPERT 또는 Admin
 
     // 수정 메서드
     public void updateNews(String title, String url) {

@@ -21,10 +21,10 @@ public class AuthHelper {
         }
     }
 
-    // Writer 권한 확인 (Admin도 Writer 가능)
-    public void validateWriterRole(Long memberId) {
+    // EXPERT 권한 확인 (Admin도 EXPERT 가능)
+    public void validateExpertRole(Long memberId) {
         Member member = memberService.findById(memberId);
-        if (!member.isWriter()) {
+        if (!member.isEXPERT()) {
             throw new GeneralException(FailureCode._FORBIDDEN);
         }
     }

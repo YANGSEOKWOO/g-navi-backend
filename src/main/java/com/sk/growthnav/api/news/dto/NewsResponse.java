@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 public class NewsResponse {
     private Long newsId;
     private String title;
-    private String writer;
+    private String expert;
     private String status;  // "승인 대기", "승인됨", "거부됨"
     private String url;
     private String date;
@@ -33,7 +33,7 @@ public class NewsResponse {
         return NewsResponse.builder()
                 .newsId(news.getId())
                 .title(news.getTitle())
-                .writer(news.getWriter().getName())
+                .expert(news.getExpert().getName())
                 .status(news.getStatus().getDescription())
                 .url(news.getUrl())
                 .date(news.getCreatedAt().format(DATE_FORMATTER))
@@ -48,7 +48,7 @@ public class NewsResponse {
         return NewsResponse.builder()
                 .newsId(news.getId())
                 .title(news.getTitle())
-                .writer(news.getWriter().getName())
+                .expert(news.getExpert().getName())
                 .url(news.getUrl())
                 .date(news.getCreatedAt().format(DATE_FORMATTER))
                 .build();

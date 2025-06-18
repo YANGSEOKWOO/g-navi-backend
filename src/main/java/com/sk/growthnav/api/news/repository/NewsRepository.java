@@ -15,7 +15,7 @@ public interface NewsRepository extends JpaRepository<News, Long> {
     List<News> findAllByOrderByCreatedAtDesc();
 
     // 특정 작성자의 뉴스 조회
-    List<News> findByWriterIdOrderByCreatedAtDesc(Long writerId);
+    List<News> findByExpertIdOrderByCreatedAtDesc(Long expertId);
 
     // 제목으로 검색 (승인된 것만)
     List<News> findByTitleContainingAndStatusOrderByCreatedAtDesc(String title, NewsStatus status);

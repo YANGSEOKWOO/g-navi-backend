@@ -29,7 +29,7 @@ public class NewsService {
 
     @Transactional
     public NewsResponse createNews(NewsCreateRequest request) {
-        Member writer = memberService.findById(request.getWriterId());
+        Member expert = memberService.findById(request.getExpertId());
 
         // 제목 자동 추출
         String finalTitle = determineFinalTitle(request);
@@ -38,13 +38,13 @@ public class NewsService {
         News news = News.builder()
                 .title(finalTitle)
                 .url(request.getUrl())
-                .writer(writer)
+                .expert(expert)
                 .status(NewsStatus.PENDING)  // 기본값: 승인 대기
                 .build();
 
         News savedNews = newsRepository.save(news);
-        log.info("뉴스 생성 완료: newsId={}, title={}, writer={}, status=PENDING",
-                savedNews.getId(), finalTitle, writer.getName());
+        log.info("뉴스 생성 완료: newsId={}, title={}, expert={}, status=PENDING",
+                savedNews.getId(), finalTitle, expert.getName());
 
         return NewsResponse.from(savedNews);
     }
@@ -69,9 +69,9 @@ public class NewsService {
                 .toList();
     }
 
-    // Writer용 - 내가 작성한 모든 뉴스 조회
-    public List<NewsResponse> getNewsByWriter(Long writerId) {
-        List<News> news = newsRepository.findByWriterIdOrderByCreatedAtDesc(writerId);
+    // Expert용 - 내가 작성한 모든 뉴스 조회
+    public List<NewsResponse> getNewsByExpert(Long expertId) {
+        List<News> news = newsRepository.findByExpertIdOrderByCreatedAtDesc(expertId);
         return news.stream()
                 .map(NewsResponse::from)
                 .toList();
@@ -154,7 +154,7 @@ public class NewsService {
     }
 
     /**
-     * 뉴스 수정 (Writer/Admin)
+     * 뉴스 수정 (Expert/Admin)
      */
     @Transactional
     public NewsResponse updateNews(Long newsId, String title, String url) {
@@ -180,8 +180,8 @@ public class NewsService {
     public void deleteNews(Long newsId) {
         News news = findNewsById(newsId);
 
-        log.info("뉴스 삭제: newsId={}, title={}, writer={}",
-                news.getId(), news.getTitle(), news.getWriter().getName());
+        log.info("뉴스 삭제: newsId={}, title={}, expert={}",
+                news.getId(), news.getTitle(), news.getExpert().getName());
 
         newsRepository.delete(news);
     }
@@ -232,9 +232,9 @@ public class NewsService {
     /**
      * 뉴스 작성자 확인 (수정/삭제 권한 체크용)
      */
-    public boolean isNewsWriter(Long newsId, Long memberId) {
+    public boolean isNewsExpert(Long newsId, Long memberId) {
         News news = findNewsById(newsId);
-        return news.getWriter().getId().equals(memberId);
+        return news.getExpert().getId().equals(memberId);
     }
 
     /**

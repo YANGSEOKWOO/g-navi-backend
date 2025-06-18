@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class NewsCreateRequest {
 
     @NotNull(message = "작성자 Id는 필수입니다.")
-    private Long writerId;
+    private Long expertId;
 
     // title을 선택사항으로 변경 (비어있으면 URL에서 자동 추출)
     @Size(max = 200, message = "제목은 200자 이하여야 합니다.")

@@ -37,7 +37,7 @@ public class Member extends BaseEntity {
     // 역할 변경 메서드
     public void changeRole(MemberRole newRole) {
         this.role = newRole;
-        this.isExpert = (newRole == MemberRole.WRITER);
+        this.isExpert = (newRole == MemberRole.EXPERT);
     }
 
 
@@ -51,8 +51,8 @@ public class Member extends BaseEntity {
         return this.role == MemberRole.ADMIN;
     }
 
-    public boolean isWriter() {
-        return this.role == MemberRole.WRITER || this.role == MemberRole.ADMIN;
+    public boolean isEXPERT() {
+        return this.role == MemberRole.EXPERT || this.role == MemberRole.ADMIN;
     }
 
 }

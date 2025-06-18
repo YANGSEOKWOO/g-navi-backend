@@ -1,6 +1,7 @@
 // MemberLoginResponse.java
 package com.sk.growthnav.api.member.dto;
 
+import com.sk.growthnav.api.member.entity.MemberRole;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,13 +14,17 @@ public class MemberLoginResponse {
     Long memberId;
     String name;
     String email;
+    MemberRole role;
+    Boolean isExpert;
     String message;
 
-    public static MemberLoginResponse of(Long memberId, String name, String email) {
+    public static MemberLoginResponse of(Long memberId, String name, String email, MemberRole role, Boolean isExpert) {
         return MemberLoginResponse.builder()
                 .memberId(memberId)
                 .name(name)
                 .email(email)
+                .role(role)
+                .isExpert(isExpert)
                 .message("로그인이 완료되었습니다.")
                 .build();
     }

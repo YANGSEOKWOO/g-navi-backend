@@ -29,14 +29,14 @@ public class NewsController {
     private final AuthHelper authHelper;
 
     @Operation(
-            summary = "뉴스 기사 생성 (Writer/Admin 전용)",
-            description = "Writer나 Admin이 새로운 뉴스 기사를 작성합니다. 작성 후 Admin의 승인을 기다립니다."
+            summary = "뉴스 기사 생성 (EXPERT/Admin 전용)",
+            description = "Expert나 Admin이 새로운 뉴스 기사를 작성합니다. 작성 후 Admin의 승인을 기다립니다."
     )
     @PostMapping
     public ApiResponse<NewsResponse> createNews(@Valid @RequestBody NewsCreateRequest request) {
 
-        // Writer 권한 확인
-        authHelper.validateWriterRole(request.getWriterId());
+        // EXPERT 권한 확인
+        authHelper.validateExpertRole(request.getExpertId());
 
         NewsResponse response = newsService.createNews(request);
         return ApiResponse.onSuccess(response);
@@ -53,16 +53,16 @@ public class NewsController {
     }
 
     @Operation(
-            summary = "내가 작성한 뉴스 조회 (Writer/Admin)",
+            summary = "내가 작성한 뉴스 조회 (EXPERT/Admin)",
             description = "작성자가 자신이 작성한 모든 뉴스 기사를 조회합니다. (승인 상태 무관)"
     )
     @GetMapping("/my")
-    public ApiResponse<List<NewsResponse>> getMyNews(@RequestParam Long writerId) {
+    public ApiResponse<List<NewsResponse>> getMyNews(@RequestParam Long expertId) {
 
-        // Writer 권한 확인
-        authHelper.validateWriterRole(writerId);
+        // expert 권한 확인
+        authHelper.validateExpertRole(expertId);
 
-        List<NewsResponse> news = newsService.getNewsByWriter(writerId);
+        List<NewsResponse> news = newsService.getNewsByExpert(expertId);
         return ApiResponse.onSuccess(news);
     }
 
@@ -77,7 +77,7 @@ public class NewsController {
                     {
                       "newsId": 1,
                       "title": "메타의 AI 앱 프라이버시 악몽",
-                      "writer": "김효준",
+                      "expert": "김효준",
                       "status": "승인 대기",
                       "date": "2025-06-16",
                       "canApprove": true,
