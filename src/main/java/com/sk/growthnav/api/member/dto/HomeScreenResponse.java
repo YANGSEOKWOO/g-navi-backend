@@ -5,6 +5,7 @@ import com.sk.growthnav.api.project.dto.ProjectInfoDTO;
 import com.sk.growthnav.global.document.SenderType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Slf4j
 public class HomeScreenResponse {
 
     String userName;
@@ -63,57 +65,82 @@ public class HomeScreenResponse {
          * 대화 제목 생성 - BOT 인사말 이후 첫 번째 사용자 메시지 기반
          */
         private static String generateChatTitle(ConversationDocument conversation) {
+            log.info("=== generateChatTitle 시작 ===");
+            log.info("대화 ID: {}", conversation.getId());
+
             if (conversation == null || conversation.getMessages().isEmpty()) {
+                log.info("대화가 null이거나 메시지가 없음");
                 return "새로운 대화";
             }
 
-            // 1. 첫 번째 실제 사용자 질문을 찾기 (BOT 인사말 이후의 첫 USER 메시지)
             List<ConversationDocument.MessageDocument> messages = conversation.getMessages();
+            log.info("메시지 총 개수: {}", messages.size());
 
-            ConversationDocument.MessageDocument firstUserMessage = null;
-
-            // BOT 메시지 다음에 오는 첫 번째 USER 메시지 찾기
+            // 모든 메시지를 순회하면서 첫 번째 사용자 메시지 찾기
             for (int i = 0; i < messages.size(); i++) {
                 ConversationDocument.MessageDocument message = messages.get(i);
+                log.info("메시지 {}: 타입={}, 내용={}",
+                        i, message.getSenderType(),
+                        message.getMessageText() != null ?
+                                (message.getMessageText().length() > 30 ?
+                                        message.getMessageText().substring(0, 30) + "..." :
+                                        message.getMessageText()) : "null");
 
+                // 사용자 메시지인지 확인
                 if (message.getSenderType() == SenderType.USER) {
-                    firstUserMessage = message;
-                    break; // 첫 번째 사용자 메시지를 찾으면 바로 사용
-                }
-            }
+                    String messageText = message.getMessageText();
+                    log.info("사용자 메시지 발견: {}", messageText);
 
-            if (firstUserMessage != null) {
-                String messageText = firstUserMessage.getMessageText();
-                if (messageText != null && !messageText.trim().isEmpty()) {
-                    // 제목 길이 제한 및 정리
-                    String title = messageText.trim();
-
-                    // 30자로 제한하고 말줄임표 추가
-                    if (title.length() > 30) {
-                        title = title.substring(0, 27) + "...";
+                    if (messageText != null && !messageText.trim().isEmpty()) {
+                        // 제목 생성
+                        String title = cleanAndShortenTitle(messageText);
+                        log.info("생성된 제목: '{}'", title);
+                        return title;
                     }
-
-                    // 줄바꿈 및 특수문자 정리
-                    title = title.replaceAll("[\\r\\n\\t]", " ");
-                    title = title.replaceAll("\\s+", " ");
-
-                    return title;
                 }
             }
 
-            // 2. 사용자 메시지가 없으면 대화 상태에 따른 제목
+            // 사용자 메시지가 없는 경우
+            log.info("사용자 메시지를 찾을 수 없음");
+
+            // BOT 메시지만 있는 경우
             if (messages.size() == 1 && messages.get(0).getSenderType() == SenderType.BOT) {
-                return "새로운 상담"; // BOT 인사말만 있는 경우
+                log.info("BOT 인사말만 있음");
+                return "새로운 상담";
             }
 
-            // 3. conversationId 기반 제목 (폴백)
+            // conversationId 기반 제목 (폴백)
             String id = conversation.getId();
-            if (id != null && id.length() > 8) {
-                return "대화 " + id.substring(id.length() - 4);
+            if (id != null && id.length() >= 4) {
+                String fallbackTitle = "대화 " + id.substring(Math.max(0, id.length() - 4));
+                log.info("폴백 제목 사용: '{}'", fallbackTitle);
+                return fallbackTitle;
             }
 
-            // 4. 최종 폴백
+            // 최종 폴백
+            log.info("최종 폴백 제목 사용");
             return "Growth Navigator 상담";
+        }
+
+        /**
+         * 제목 정리 및 단축
+         */
+        private static String cleanAndShortenTitle(String text) {
+            if (text == null || text.trim().isEmpty()) {
+                return "빈 메시지";
+            }
+
+            // 기본 정리
+            String cleaned = text.trim()
+                    .replaceAll("[\\r\\n\\t]+", " ")  // 줄바꿈을 공백으로
+                    .replaceAll("\\s+", " ");         // 연속 공백을 하나로
+
+            // 길이 제한
+            if (cleaned.length() > 30) {
+                cleaned = cleaned.substring(0, 27) + "...";
+            }
+
+            return cleaned;
         }
     }
 
@@ -122,6 +149,8 @@ public class HomeScreenResponse {
             String userName,
             List<ProjectInfoDTO> projects,
             List<ConversationDocument> recentConversations) {
+
+        log.info("HomeScreenResponse 생성 시작");
 
         // 1. 프로젝트 이름 목록 추출
         List<String> projectNames = projects.stream()
@@ -139,15 +168,20 @@ public class HomeScreenResponse {
                 .collect(Collectors.toList());
 
         // 3. 최근 대화 목록 변환
+        log.info("대화 목록을 RecentChat으로 변환 시작, 대화 수: {}", recentConversations.size());
         List<RecentChat> recentChats = recentConversations.stream()
-                .map(RecentChat::from)
+                .map(conversation -> {
+                    log.info("대화 변환 중: ID={}", conversation.getId());
+                    return RecentChat.from(conversation);
+                })
                 .collect(Collectors.toList());
 
+        log.info("HomeScreenResponse 생성 완료");
         return HomeScreenResponse.builder()
                 .userName(userName)
                 .skills(skills)
                 .projectNames(projectNames)
-                .recentChats(recentChats) // 변경된 필드명
+                .recentChats(recentChats)
                 .build();
     }
 }

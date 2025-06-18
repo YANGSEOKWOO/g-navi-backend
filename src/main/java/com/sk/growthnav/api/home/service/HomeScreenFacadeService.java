@@ -1,4 +1,4 @@
-// src/main/java/com/sk/growthnav/api/home/service/HomeScreenFacadeService.java
+// 1단계: HomeScreenFacadeService.java 수정 - 디버깅 로그 추가
 
 package com.sk.growthnav.api.home.service;
 
@@ -40,8 +40,40 @@ public class HomeScreenFacadeService {
         // 3. 최근 대화 목록 조회 (모든 대화)
         List<ConversationDocument> recentConversations = getRecentConversations(memberId);
 
+        // ===== 추가된 디버깅 코드 =====
+        log.info("=== 대화 제목 생성 디버깅 시작 ===");
+        log.info("조회된 대화 수: {}", recentConversations.size());
+
+        for (int i = 0; i < recentConversations.size(); i++) {
+            ConversationDocument conversation = recentConversations.get(i);
+            log.info("대화 {}: ID={}, 메시지 수={}",
+                    i + 1, conversation.getId(), conversation.getMessageCount());
+
+            // 각 메시지의 상세 정보 출력
+            if (conversation.getMessages() != null) {
+                for (int j = 0; j < conversation.getMessages().size(); j++) {
+                    ConversationDocument.MessageDocument message = conversation.getMessages().get(j);
+                    String messagePreview = message.getMessageText().length() > 50 ?
+                            message.getMessageText().substring(0, 50) + "..." : message.getMessageText();
+                    log.info("  메시지 {}: [{}] {}",
+                            j + 1, message.getSenderType(), messagePreview);
+                }
+            }
+        }
+        log.info("=== 대화 제목 생성 디버깅 종료 ===");
+
         // 4. 홈 화면 응답 생성
         HomeScreenResponse homeScreen = HomeScreenResponse.of(userName, projects, recentConversations);
+
+        // ===== 생성된 제목 확인 =====
+        log.info("=== 생성된 제목들 확인 ===");
+        if (homeScreen.getRecentChats() != null) {
+            for (int i = 0; i < homeScreen.getRecentChats().size(); i++) {
+                HomeScreenResponse.RecentChat chat = homeScreen.getRecentChats().get(i);
+                log.info("제목 {}: ID={}, 제목='{}'",
+                        i + 1, chat.getConversationId(), chat.getTitle());
+            }
+        }
 
         log.info("홈 화면 조회 완료: memberId={}, skillCount={}, projectCount={}, conversationCount={}",
                 memberId,
