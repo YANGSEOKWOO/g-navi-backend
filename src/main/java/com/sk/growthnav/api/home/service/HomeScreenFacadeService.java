@@ -40,6 +40,21 @@ public class HomeScreenFacadeService {
         // 3. 최근 대화 목록 조회 (모든 대화)
         List<ConversationDocument> recentConversations = getRecentConversations(memberId);
 
+        // 디버깅: 대화 내용 상세 로그
+        log.info("=== 대화 데이터 디버깅 시작 ===");
+        for (ConversationDocument conversation : recentConversations) {
+            log.info("대화 ID: {}, 메시지 수: {}", conversation.getId(), conversation.getMessageCount());
+
+            // 각 메시지 출력
+            for (int i = 0; i < conversation.getMessages().size(); i++) {
+                ConversationDocument.MessageDocument message = conversation.getMessages().get(i);
+                String messagePreview = message.getMessageText().length() > 50 ?
+                        message.getMessageText().substring(0, 50) + "..." : message.getMessageText();
+                log.info("  메시지 {}: [{}] {}", i + 1, message.getSenderType(), messagePreview);
+            }
+        }
+        log.info("=== 대화 데이터 디버깅 종료 ===");
+
         // 4. 홈 화면 응답 생성
         HomeScreenResponse homeScreen = HomeScreenResponse.of(userName, projects, recentConversations);
 
@@ -48,6 +63,14 @@ public class HomeScreenFacadeService {
                 homeScreen.getSkills() != null ? homeScreen.getSkills().size() : 0,
                 homeScreen.getProjectNames() != null ? homeScreen.getProjectNames().size() : 0,
                 homeScreen.getRecentChats() != null ? homeScreen.getRecentChats().size() : 0);
+
+        // 생성된 제목들도 로그로 확인
+        if (homeScreen.getRecentChats() != null) {
+            log.info("=== 생성된 대화 제목들 ===");
+            for (HomeScreenResponse.RecentChat chat : homeScreen.getRecentChats()) {
+                log.info("대화 ID: {}, 제목: '{}'", chat.getConversationId(), chat.getTitle());
+            }
+        }
 
         return homeScreen;
     }
