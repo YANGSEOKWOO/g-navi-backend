@@ -1,5 +1,7 @@
 package com.sk.growthnav.api.file.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -13,19 +15,26 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/files")  // /api/files에서 /files로 변경
 @Slf4j
 public class FileController {
 
-    @Value("${app.storage.pvc.path:/mnt/gnavi}")
+    @Value("${app.storage.pvc.path:/app/storage}")
     private String pvcBasePath;
 
     /**
      * PVC에 저장된 파일 서빙
-     * GET /api/files/thumbnails/news_1_abc123.jpg
+     * GET /files/thumbnails/news_1_abc123.jpg
      */
+    @Operation(
+            summary = "파일 서빙",
+            description = "PVC에 저장된 파일을 서빙합니다. 주로 뉴스 썸네일 이미지 용도로 사용됩니다.",
+            hidden = true  // 일반 사용자용 API가 아니므로 숨김
+    )
     @GetMapping("/**")
-    public ResponseEntity<Resource> serveFile(@RequestParam String path) {
+    public ResponseEntity<Resource> serveFile(
+            @Parameter(description = "파일 경로", example = "thumbnails/news_1_abc123.jpg")
+            @RequestParam String path) {
         try {
             // 1. 보안: path traversal 공격 방지
             if (path.contains("..") || path.contains("~") || path.startsWith("/")) {
@@ -61,10 +70,26 @@ public class FileController {
 
     /**
      * PathVariable 방식으로도 지원
-     * GET /api/files/thumbnails/news_1_abc123.jpg
+     * GET /files/thumbnails/news_1_abc123.jpg
      */
+    @Operation(
+            summary = "썸네일 이미지 서빙",
+            description = """
+                    뉴스 기사의 썸네일 이미지를 서빙합니다.
+                    
+                    **사용 예시:**
+                    - GET /files/thumbnails/news_1_abc123.jpg
+                    - 브라우저에서 직접 접근 가능
+                    - 이미지 태그의 src 속성으로 사용
+                    
+                    **지원 형식:** JPG, PNG, GIF, WebP
+                    """,
+            tags = {"파일 서빙"}
+    )
     @GetMapping("/thumbnails/{fileName}")
-    public ResponseEntity<Resource> serveThumbnail(@PathVariable String fileName) {
+    public ResponseEntity<Resource> serveThumbnail(
+            @Parameter(description = "썸네일 파일명", example = "news_1_abc123.jpg")
+            @PathVariable String fileName) {
         return serveFile("thumbnails/" + fileName);
     }
 
