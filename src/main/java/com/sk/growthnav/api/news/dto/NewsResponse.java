@@ -19,6 +19,7 @@ public class NewsResponse {
     private String status;  // "승인 대기", "승인됨", "거부됨"
     private String url;
     private String date;
+    private String thumbnailUrl;
 
     // Admin 관리 페이지용 추가 필드
     private Boolean canApprove;    // 승인 가능 여부
@@ -36,6 +37,7 @@ public class NewsResponse {
                 .expert(news.getExpert().getName())
                 .status(news.getStatus().getDescription())
                 .url(news.getUrl())
+                .thumbnailUrl(news.getThumbnailUrl())
                 .date(news.getCreatedAt().format(DATE_FORMATTER))
                 .canApprove(news.isPending())     // 대기중일 때만 승인 가능
                 .canUnapprove(news.isApproved())  // 승인됨일 때만 해제 가능
@@ -50,6 +52,7 @@ public class NewsResponse {
                 .title(news.getTitle())
                 .expert(news.getExpert().getName())
                 .url(news.getUrl())
+                .thumbnailUrl(news.getThumbnailUrl())
                 .date(news.getCreatedAt().format(DATE_FORMATTER))
                 .build();
     }
