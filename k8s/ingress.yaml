@@ -18,6 +18,14 @@ spec:
                 name: gnavi4-backend
                 port:
                   number: 8080
+          #파일 서빙 경로
+          - path: /files
+            pathType: Prefix
+            backend:
+              service:
+                name: gnavi4-backend
+                port:
+                  number: 8080
           - path: /ai
             pathType: Prefix
             backend:
