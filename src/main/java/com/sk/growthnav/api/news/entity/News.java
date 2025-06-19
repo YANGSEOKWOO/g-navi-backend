@@ -24,6 +24,14 @@ public class News extends BaseEntity {
     @Column(nullable = false, length = 500)
     private String url;
 
+    // 썸네일 이미지 경로 추가
+    @Column(length = 500)
+    private String thumbnailPath;  // PVC 내 이미지 파일 경로
+
+    // 썸네일 접근 URL 추가
+    @Column(length = 500)
+    private String thumbnailUrl;   // 사용자가 접근할 수 있는 URL
+
     // isRegistered 대신 status 사용
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -38,6 +46,12 @@ public class News extends BaseEntity {
     public void updateNews(String title, String url) {
         this.title = title;
         this.url = url;
+    }
+
+    // 썸네일 설정 메서드
+    public void setThumbnail(String thumbnailPath, String thumbnailUrl) {
+        this.thumbnailPath = thumbnailPath;
+        this.thumbnailUrl = thumbnailUrl;
     }
 
     // 승인 처리
