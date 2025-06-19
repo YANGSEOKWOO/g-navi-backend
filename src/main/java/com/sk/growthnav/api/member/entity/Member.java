@@ -34,10 +34,11 @@ public class Member extends BaseEntity {
     @Builder.Default
     private Boolean isExpert = false;
 
+    // 추가된 등급 필드
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private MemberLevel level = MemberLevel.CL1;
+    private MemberLevel level = MemberLevel.CL1;  // 기본값: CL1
 
     // 역할 변경 메서드
     public void changeRole(MemberRole newRole) {
@@ -49,7 +50,6 @@ public class Member extends BaseEntity {
     public void changeLevel(MemberLevel newLevel) {
         this.level = newLevel;
     }
-
 
     // 전문가 여부 확인
     public boolean isExpert() {
@@ -64,5 +64,4 @@ public class Member extends BaseEntity {
     public boolean isEXPERT() {
         return this.role == MemberRole.EXPERT || this.role == MemberRole.ADMIN;
     }
-
 }

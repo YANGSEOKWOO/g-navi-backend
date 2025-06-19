@@ -12,7 +12,6 @@ import com.sk.growthnav.global.apiPayload.code.FailureCode;
 import com.sk.growthnav.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +26,7 @@ public class NewsService {
     private final NewsRepository newsRepository;
     private final MemberService memberService;
     private final TitleExtractorService titleExtractorService;
-    private final NewsThumbnailService newsThumbnailService;
+    // newsThumbnailService 의존성 제거
 
     @Transactional
     public NewsResponse createNews(NewsCreateRequest request) {
@@ -48,51 +47,28 @@ public class NewsService {
         log.info("뉴스 생성 완료: newsId={}, title={}, expert={}, status=PENDING",
                 savedNews.getId(), finalTitle, expert.getName());
 
-        // 비동기로 썸네일 추출 및 저장 (성능 향상)
-        extractThumbnailAsync(savedNews);
+        // 썸네일 추출은 일단 제거 (나중에 필요하면 추가)
+        // extractThumbnailAsync(savedNews);
 
         return NewsResponse.from(savedNews);
-    }
-
-    /**
-     * 비동기로 썸네일 추출 및 저장
-     */
-    @Async
-    public void extractThumbnailAsync(News news) {
-        try {
-            log.info("썸네일 추출 시작: newsId={}, url={}", news.getId(), news.getUrl());
-
-            NewsThumbnailService.ThumbnailResult result =
-                    newsThumbnailService.extractAndSaveThumbnail(news.getUrl(), news.getId());
-
-            if (result.isSuccess()) {
-                // 썸네일 정보 업데이트
-                news.setThumbnail(result.getFilePath(), result.getAccessUrl());
-                newsRepository.save(news);
-
-                log.info("썸네일 저장 완료: newsId={}, thumbnailUrl={}",
-                        news.getId(), result.getAccessUrl());
-            } else {
-                log.warn("썸네일 추출 실패: newsId={}, error={}",
-                        news.getId(), result.getErrorMessage());
-            }
-        } catch (Exception e) {
-            log.error("썸네일 추출 중 예외: newsId={}, error={}",
-                    news.getId(), e.getMessage(), e);
-        }
     }
 
     /**
      * 제목 결정: URL에서 자동 추출
      */
     private String determineFinalTitle(NewsCreateRequest request) {
+        // 요청에 제목이 있으면 사용, 없으면 URL에서 추출
+        if (request.getTitle() != null && !request.getTitle().trim().isEmpty()) {
+            return request.getTitle().trim();
+        }
+
         log.info("URL에서 제목 자동 추출: url={}", request.getUrl());
         String extractedTitle = titleExtractorService.extractTitle(request.getUrl());
         log.info("추출된 제목: {}", extractedTitle);
         return extractedTitle;
     }
 
-    // ========== 조회 메서드들 (기존) ==========
+    // ========== 조회 메서드들 ==========
 
     // 일반 사용자용 - 승인된 뉴스만 조회
     public List<NewsResponse> getApprovedNews() {
@@ -130,8 +106,6 @@ public class NewsService {
     public long getPendingNewsCount() {
         return newsRepository.countByStatus(NewsStatus.PENDING);
     }
-
-    // ========== 새로 추가할 메서드들 ==========
 
     /**
      * 뉴스 상세 조회
@@ -187,26 +161,6 @@ public class NewsService {
     }
 
     /**
-     * 뉴스 수정 (Expert/Admin)
-     */
-    @Transactional
-    public NewsResponse updateNews(Long newsId, String title, String url) {
-        News news = findNewsById(newsId);
-
-        // 제목이 제공되지 않으면 URL에서 다시 추출
-        String finalTitle = (title != null && !title.trim().isEmpty()) ?
-                title.trim() : titleExtractorService.extractTitle(url);
-
-        news.updateNews(finalTitle, url);
-        News savedNews = newsRepository.save(news);
-
-        log.info("뉴스 수정 완료: newsId={}, newTitle={}, newUrl={}",
-                newsId, finalTitle, url);
-
-        return NewsResponse.from(savedNews);
-    }
-
-    /**
      * 뉴스 완전 삭제 (Admin 전용)
      */
     @Transactional
@@ -220,100 +174,10 @@ public class NewsService {
     }
 
     /**
-     * 제목으로 뉴스 검색 (승인된 것만)
-     */
-    public List<NewsResponse> searchNewsByTitle(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return getApprovedNews(); // 키워드가 없으면 전체 승인된 뉴스 반환
-        }
-
-        List<News> news = newsRepository.findByTitleContainingAndStatusOrderByCreatedAtDesc(
-                keyword.trim(), NewsStatus.APPROVED);
-
-        return news.stream()
-                .map(NewsResponse::forPublic)
-                .toList();
-    }
-
-    /**
-     * 뉴스 통계 정보 조회 (Admin 대시보드용)
-     */
-    public NewsStatistics getNewsStatistics() {
-        long totalNews = newsRepository.count();
-        long approvedNews = newsRepository.countByStatus(NewsStatus.APPROVED);
-        long pendingNews = newsRepository.countByStatus(NewsStatus.PENDING);
-        long rejectedNews = newsRepository.countByStatus(NewsStatus.REJECTED);
-
-        return NewsStatistics.builder()
-                .totalNews(totalNews)
-                .approvedNews(approvedNews)
-                .pendingNews(pendingNews)
-                .rejectedNews(rejectedNews)
-                .build();
-    }
-
-    /**
-     * 특정 상태의 뉴스 조회
-     */
-    public List<NewsResponse> getNewsByStatus(NewsStatus status) {
-        List<News> news = newsRepository.findByStatusOrderByCreatedAtDesc(status);
-        return news.stream()
-                .map(NewsResponse::from)
-                .toList();
-    }
-
-    /**
-     * 뉴스 작성자 확인 (수정/삭제 권한 체크용)
-     */
-    public boolean isNewsExpert(Long newsId, Long memberId) {
-        News news = findNewsById(newsId);
-        return news.getExpert().getId().equals(memberId);
-    }
-
-    /**
-     * 최근 N개 승인된 뉴스 조회
-     */
-    public List<NewsResponse> getRecentApprovedNews(int limit) {
-        List<News> news = newsRepository.findByStatusOrderByCreatedAtDesc(NewsStatus.APPROVED);
-        return news.stream()
-                .limit(limit)
-                .map(NewsResponse::forPublic)
-                .toList();
-    }
-
-    // ========== Helper 메서드들 ==========
-
-    /**
      * 뉴스 ID로 뉴스 조회 (존재하지 않으면 예외 발생)
      */
     private News findNewsById(Long newsId) {
         return newsRepository.findById(newsId)
                 .orElseThrow(() -> new GeneralException(FailureCode._NOT_FOUND));
-    }
-
-    // ========== 내부 DTO 클래스 ==========
-
-    /**
-     * 뉴스 통계 정보
-     */
-    @lombok.Getter
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    @lombok.Builder
-    public static class NewsStatistics {
-        private long totalNews;      // 전체 뉴스 수
-        private long approvedNews;   // 승인된 뉴스 수
-        private long pendingNews;    // 승인 대기 뉴스 수
-        private long rejectedNews;   // 거부된 뉴스 수
-
-        // 승인율 계산
-        public double getApprovalRate() {
-            return totalNews > 0 ? (double) approvedNews / totalNews * 100 : 0.0;
-        }
-
-        // 대기율 계산
-        public double getPendingRate() {
-            return totalNews > 0 ? (double) pendingNews / totalNews * 100 : 0.0;
-        }
     }
 }

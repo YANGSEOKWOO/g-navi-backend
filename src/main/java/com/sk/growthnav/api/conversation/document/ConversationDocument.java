@@ -1,5 +1,6 @@
 package com.sk.growthnav.api.conversation.document;
 
+import com.sk.growthnav.api.conversation.entity.QuestionCategory;
 import com.sk.growthnav.global.document.SenderType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,6 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,8 @@ public class ConversationDocument {
     String id;
 
     Long memberId;
+    // 추가: 대화의 주요 카테고리 (첫 번째 사용자 질문 기준)
+    QuestionCategory primaryCategory;
 
     @Builder.Default
     List<MessageDocument> messages = new ArrayList<>();
@@ -36,11 +40,24 @@ public class ConversationDocument {
 
     // 메시지 추가 편의 메서드
     public void addMessage(SenderType senderType, String messageText) {
-        this.messages.add(MessageDocument.builder()
+        MessageDocument newMessage = MessageDocument.builder()
                 .senderType(senderType)
                 .messageText(messageText)
                 .timestamp(LocalDateTime.now())
-                .build());
+                .build();
+
+        // 사용자 메시지인 경우 카테고리 분석
+        if (senderType == SenderType.USER) {
+            QuestionCategory category = QuestionCategory.categorizeMessage(messageText);
+            newMessage.setCategory(category);
+
+            // 첫 번째 사용자 메시지인 경우 대화의 주요 카테고리로 설정
+            if (this.primaryCategory == null) {
+                this.primaryCategory = category;
+            }
+        }
+
+        this.messages.add(newMessage);
     }
 
     // ConversationService에서 필요한 메서드들 추가
@@ -81,7 +98,27 @@ public class ConversationDocument {
                 id, memberId, getMessageCount());
     }
 
+    // 새로 추가: 오늘 대화했는지 확인
+    public boolean isToday() {
+        if (updatedAt == null) return false;
+        return updatedAt.toLocalDate().equals(LocalDate.now());
+    }
+
+    // 새로 추가: 카테고리별 사용자 질문 수 조회
+    public long getUserQuestionCountByCategory(QuestionCategory category) {
+        return messages.stream()
+                .filter(message -> message.getSenderType() == SenderType.USER)
+                .filter(message -> category.equals(message.getCategory()))
+                .count();
+    }
+
+    // 새로 추가: 전체 사용자 질문 수
+    public long getTotalUserQuestions() {
+        return getMessageCountBySenderType(SenderType.USER);
+    }
+
     @Getter
+    @Setter
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
@@ -89,13 +126,14 @@ public class ConversationDocument {
         private SenderType senderType;
         private String messageText;
         private LocalDateTime timestamp;
+        private QuestionCategory category;
 
-        // 메시지 요약 (디버깅용)
         public String getSummary() {
-            return String.format("%s: %s (at %s)",
+            return String.format("%s: %s (at %s) [%s]",
                     senderType,
                     messageText.length() > 20 ? messageText.substring(0, 20) + "..." : messageText,
-                    timestamp);
+                    timestamp,
+                    category);
         }
     }
 }

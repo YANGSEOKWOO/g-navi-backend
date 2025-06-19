@@ -64,7 +64,7 @@ public class ConversationService {
     }
 
     /**
-     * 메시지 전송 및 AI 응답 처리 (member_info 없이 간단한 Message)
+     * 메시지 전송 및 AI 응답 처리 (카테고리 분석 포함)
      */
     @Transactional
     public ConversationStartResponse sendMessage(MessageSendRequest request) {
@@ -74,7 +74,7 @@ public class ConversationService {
         // 대화 조회
         ConversationDocument conversation = findConversationById(request.getConversationId());
 
-        // 사용자 메시지 추가
+        // 사용자 메시지 추가 (카테고리 자동 분석 포함)
         conversation.addMessage(SenderType.USER, request.getMessageText());
         conversationRepository.save(conversation);
 
@@ -84,6 +84,9 @@ public class ConversationService {
         // Bot 응답 추가
         conversation.addMessage(SenderType.BOT, botResponse);
         ConversationDocument savedConversation = conversationRepository.save(conversation);
+
+        log.info("메시지 전송 완료: conversationId={}, primaryCategory={}",
+                savedConversation.getId(), savedConversation.getPrimaryCategory());
 
         return ConversationStartResponse.of(savedConversation.getId(), botResponse);
     }
