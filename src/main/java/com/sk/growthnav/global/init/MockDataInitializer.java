@@ -1,6 +1,7 @@
 package com.sk.growthnav.global.init;
 
 import com.sk.growthnav.api.member.entity.Member;
+import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.entity.MemberRole;
 import com.sk.growthnav.api.member.repository.MemberRepository;
 import com.sk.growthnav.api.news.entity.News;
@@ -94,19 +95,19 @@ public class MockDataInitializer {
 
         List<Member> members = List.of(
                 Member.builder().name("김효준").email("expert1@test.com").password("test123")
-                        .role(MemberRole.EXPERT).isExpert(true).build(),
+                        .role(MemberRole.EXPERT).isExpert(true).level(MemberLevel.CL4).build(),
                 Member.builder().name("양석우").email("expert2@test.com").password("test123")
-                        .role(MemberRole.EXPERT).isExpert(true).build(),
+                        .role(MemberRole.EXPERT).isExpert(true).level(MemberLevel.CL5).build(),
                 Member.builder().name("이민수").email("user1@test.com").password("test123")
-                        .role(MemberRole.USER).isExpert(false).build(),
+                        .role(MemberRole.USER).isExpert(false).level(MemberLevel.CL2).build(),
                 Member.builder().name("박지영").email("user2@test.com").password("test123")
-                        .role(MemberRole.USER).isExpert(false).build(),
+                        .role(MemberRole.USER).isExpert(false).level(MemberLevel.CL3).build(),
                 Member.builder().name("최현우").email("user3@test.com").password("test123")
-                        .role(MemberRole.USER).isExpert(false).build()
+                        .role(MemberRole.USER).isExpert(false).level(MemberLevel.CL1).build()
         );
 
         List<Member> savedMembers = memberRepository.saveAll(members);
-        log.info("👥 목업 사용자 {}명 생성 완료", savedMembers.size());
+        log.info("👥 목업 사용자 {}명 생성 완료 (등급 포함)", savedMembers.size());
         return savedMembers;
     }
 

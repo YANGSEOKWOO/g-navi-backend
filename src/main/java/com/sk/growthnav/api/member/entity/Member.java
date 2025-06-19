@@ -34,10 +34,20 @@ public class Member extends BaseEntity {
     @Builder.Default
     private Boolean isExpert = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private MemberLevel level = MemberLevel.CL1;
+
     // 역할 변경 메서드
     public void changeRole(MemberRole newRole) {
         this.role = newRole;
         this.isExpert = (newRole == MemberRole.EXPERT);
+    }
+
+    // 등급 변경 메서드
+    public void changeLevel(MemberLevel newLevel) {
+        this.level = newLevel;
     }
 
 

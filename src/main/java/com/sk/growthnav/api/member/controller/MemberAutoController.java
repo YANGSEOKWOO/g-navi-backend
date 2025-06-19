@@ -146,4 +146,34 @@ public class MemberAutoController {
         log.info("홈 화면 데이터 응답 완료: memberId={}", memberId);
         return ApiResponse.onSuccess(homeScreen);
     }
+
+    @Operation(
+            summary = "회원 등급 변경",
+            description = """
+                    회원의 등급을 변경합니다.
+                    
+                    **등급 종류:**
+                    - CL1, CL2, CL3, CL4, CL5
+                    """,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "등급 변경 요청",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LevelChangeRequest.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "memberId": 1,
+                                              "newLevel": "CL3"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    )
+    @PutMapping("/members/level")
+    public ApiResponse<String> changeMemberLevel(@Valid @RequestBody LevelChangeRequest request) {
+        memberService.changeMemberLevel(request.getMemberId(), request.getNewLevel());
+        return ApiResponse.onSuccess("회원 등급이 변경되었습니다.");
+    }
 }

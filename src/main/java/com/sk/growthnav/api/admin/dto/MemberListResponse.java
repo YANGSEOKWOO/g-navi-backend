@@ -1,6 +1,7 @@
 package com.sk.growthnav.api.admin.dto;
 
 import com.sk.growthnav.api.member.entity.Member;
+import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.entity.MemberRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +18,7 @@ public class MemberListResponse {
     private String email;
     private MemberRole role;
     private Boolean isExpert;
+    private MemberLevel level;
     private String joinDate;
 
     public static MemberListResponse from(Member member) {
@@ -26,6 +28,7 @@ public class MemberListResponse {
                 .email(member.getEmail())
                 .role(member.getRole())
                 .isExpert(member.getIsExpert())
+                .level(member.getLevel())
                 .joinDate(member.getCreatedAt().toLocalDate().toString())
                 .build();
     }

@@ -2,6 +2,7 @@ package com.sk.growthnav.api.member.service;
 
 import com.sk.growthnav.api.member.dto.*;
 import com.sk.growthnav.api.member.entity.Member;
+import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.entity.MemberRole;
 import com.sk.growthnav.api.member.repository.MemberRepository;
 import com.sk.growthnav.global.apiPayload.code.FailureCode;
@@ -40,6 +41,7 @@ public class MemberService {
                 .password(request.getPassword())
                 .role(MemberRole.USER)
                 .isExpert(false)
+                .level(MemberLevel.CL1)
                 .build();
         Member savedMember = memberRepository.save(member);
         log.info("회원가입 완료: memberId={}, email={}", savedMember.getId(), savedMember.getEmail());
@@ -67,7 +69,7 @@ public class MemberService {
         }
 
         log.info("로그인 완료: memberId={}, email={}", member.getId(), member.getEmail());
-        return MemberLoginResponse.of(member.getId(), member.getName(), member.getEmail(), member.getRole(), member.getIsExpert());
+        return MemberLoginResponse.of(member.getId(), member.getName(), member.getEmail(), member.getRole(), member.getIsExpert(), member.getLevel());
     }
 
     /**
@@ -94,5 +96,21 @@ public class MemberService {
     public boolean isEmailExists(String email) {
         log.debug("이메일 중복 확인: email={}", email);
         return memberRepository.existsByEmail(email);
+    }
+
+    /**
+     * 회원 등급 변경
+     */
+    @Transactional
+    public void changeMemberLevel(Long memberId, MemberLevel newLevel) {
+        log.info("회원 등급 변경: memberId={}, newLevel={}", memberId, newLevel);
+
+        Member member = findById(memberId);
+        MemberLevel oldLevel = member.getLevel();
+        member.changeLevel(newLevel);
+        memberRepository.save(member);
+
+        log.info("등급 변경 완료: memberId={}, {} -> {}", memberId, oldLevel, newLevel);
+
     }
 }
