@@ -12,6 +12,7 @@ import com.sk.growthnav.global.apiPayload.code.FailureCode;
 import com.sk.growthnav.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class NewsService {
     private final NewsRepository newsRepository;
     private final MemberService memberService;
     private final TitleExtractorService titleExtractorService;
+    private final NewsThumbnailService newsThumbnailService;
 
     @Transactional
     public NewsResponse createNews(NewsCreateRequest request) {
@@ -46,7 +48,38 @@ public class NewsService {
         log.info("뉴스 생성 완료: newsId={}, title={}, expert={}, status=PENDING",
                 savedNews.getId(), finalTitle, expert.getName());
 
+        // 비동기로 썸네일 추출 및 저장 (성능 향상)
+        extractThumbnailAsync(savedNews);
+
         return NewsResponse.from(savedNews);
+    }
+
+    /**
+     * 비동기로 썸네일 추출 및 저장
+     */
+    @Async
+    public void extractThumbnailAsync(News news) {
+        try {
+            log.info("썸네일 추출 시작: newsId={}, url={}", news.getId(), news.getUrl());
+
+            NewsThumbnailService.ThumbnailResult result =
+                    newsThumbnailService.extractAndSaveThumbnail(news.getUrl(), news.getId());
+
+            if (result.isSuccess()) {
+                // 썸네일 정보 업데이트
+                news.setThumbnail(result.getFilePath(), result.getAccessUrl());
+                newsRepository.save(news);
+
+                log.info("썸네일 저장 완료: newsId={}, thumbnailUrl={}",
+                        news.getId(), result.getAccessUrl());
+            } else {
+                log.warn("썸네일 추출 실패: newsId={}, error={}",
+                        news.getId(), result.getErrorMessage());
+            }
+        } catch (Exception e) {
+            log.error("썸네일 추출 중 예외: newsId={}, error={}",
+                    news.getId(), e.getMessage(), e);
+        }
     }
 
     /**
