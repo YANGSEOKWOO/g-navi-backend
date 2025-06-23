@@ -10,16 +10,19 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+  # 비동기 처리 관련 설정
   task:
     execution:
       pool:
-        core-size: 2
-        max-size: 4
-        queue-capacity: 100
-      thread-name-prefix: thumbnail-
+        core-size: 4           # 기본 스레드 풀 코어 사이즈
+        max-size: 8            # 기본 스레드 풀 최대 사이즈
+        queue-capacity: 200    # 큐 용량
+        keep-alive: 60s        # 스레드 유지 시간
+      thread-name-prefix: spring-async-
     scheduling:
       pool:
-        size: 2
+        size: 4                # 스케줄링 스레드 풀 사이즈
+      thread-name-prefix: spring-scheduling-
 springdoc:
   swagger-ui:
     path: /swagger/swagger-ui

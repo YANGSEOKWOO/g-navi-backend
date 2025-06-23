@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +27,12 @@ public class NewsService {
     private final NewsRepository newsRepository;
     private final MemberService memberService;
     private final TitleExtractorService titleExtractorService;
-    // newsThumbnailService 의존성 제거
+    private final NewsThumbnailService newsThumbnailService;
 
     @Transactional
     public NewsResponse createNews(NewsCreateRequest request) {
+        log.info("뉴스 생성 시작: expertId={}, url={}", request.getExpertId(), request.getUrl());
+
         Member expert = memberService.findById(request.getExpertId());
 
         // 제목 자동 추출
@@ -47,8 +50,8 @@ public class NewsService {
         log.info("뉴스 생성 완료: newsId={}, title={}, expert={}, status=PENDING",
                 savedNews.getId(), finalTitle, expert.getName());
 
-        // 썸네일 추출은 일단 제거 (나중에 필요하면 추가)
-        // extractThumbnailAsync(savedNews);
+        // 비동기 썸네일 추출 실행
+        extractThumbnailAsync(savedNews);
 
         return NewsResponse.from(savedNews);
     }
@@ -59,26 +62,100 @@ public class NewsService {
     private String determineFinalTitle(NewsCreateRequest request) {
         // 요청에 제목이 있으면 사용, 없으면 URL에서 추출
         if (request.getTitle() != null && !request.getTitle().trim().isEmpty()) {
+            log.info("사용자 제공 제목 사용: {}", request.getTitle().trim());
             return request.getTitle().trim();
         }
 
-        log.info("URL에서 제목 자동 추출: url={}", request.getUrl());
-        String extractedTitle = titleExtractorService.extractTitle(request.getUrl());
-        log.info("추출된 제목: {}", extractedTitle);
-        return extractedTitle;
+        log.info("URL에서 제목 자동 추출 시작: url={}", request.getUrl());
+        try {
+            String extractedTitle = titleExtractorService.extractTitle(request.getUrl());
+            log.info("제목 추출 성공: url={}, title={}", request.getUrl(), extractedTitle);
+            return extractedTitle;
+        } catch (Exception e) {
+            log.warn("제목 추출 실패, 기본 제목 사용: url={}, error={}", request.getUrl(), e.getMessage());
+            return "뉴스 기사"; // 폴백 제목
+        }
     }
 
-    // ========== 조회 메서드들 ==========
+    /**
+     * 비동기 썸네일 추출 (기본 스레드 풀 사용)
+     */
+    private void extractThumbnailAsync(News news) {
+        log.info("비동기 썸네일 추출 요청: newsId={}, url={}", news.getId(), news.getUrl());
 
-    // 일반 사용자용 - 승인된 뉴스만 조회
+        // 기본 ForkJoinPool 사용 (별도 스레드 풀 불필요)
+        CompletableFuture
+                .supplyAsync(() -> {
+                    log.debug("썸네일 추출 작업 시작: newsId={}, thread={}",
+                            news.getId(), Thread.currentThread().getName());
+
+                    long startTime = System.currentTimeMillis();
+                    NewsThumbnailService.ThumbnailResult result =
+                            newsThumbnailService.extractAndSaveThumbnail(news.getUrl(), news.getId());
+                    long duration = System.currentTimeMillis() - startTime;
+
+                    log.debug("썸네일 추출 완료: newsId={}, duration={}ms, success={}",
+                            news.getId(), duration, result.isSuccess());
+
+                    return result;
+                }) // 기본 스레드 풀 사용
+                .thenAccept(thumbnailResult -> {
+                    // 결과 처리
+                    processThumbnailResult(news.getId(), thumbnailResult);
+                })
+                .exceptionally(throwable -> {
+                    // 예외 처리
+                    log.error("썸네일 추출 중 예상치 못한 오류: newsId={}, error={}",
+                            news.getId(), throwable.getMessage(), throwable);
+                    return null;
+                });
+    }
+
+    /**
+     * 썸네일 추출 결과 처리
+     */
+    private void processThumbnailResult(Long newsId, NewsThumbnailService.ThumbnailResult thumbnailResult) {
+        if (thumbnailResult.isSuccess()) {
+            log.info("썸네일 추출 성공: newsId={}, filePath={}, accessUrl={}",
+                    newsId, thumbnailResult.getFilePath(), thumbnailResult.getAccessUrl());
+
+            // 뉴스 엔티티에 썸네일 정보 업데이트
+            updateNewsThumbnail(newsId, thumbnailResult.getFilePath(), thumbnailResult.getAccessUrl());
+        } else {
+            log.warn("썸네일 추출 실패: newsId={}, error={}",
+                    newsId, thumbnailResult.getErrorMessage());
+        }
+    }
+
+    /**
+     * 뉴스 썸네일 정보 업데이트 (별도 트랜잭션)
+     */
+    @Transactional
+    public void updateNewsThumbnail(Long newsId, String thumbnailPath, String thumbnailUrl) {
+        try {
+            News news = newsRepository.findById(newsId)
+                    .orElseThrow(() -> new GeneralException(FailureCode._NOT_FOUND));
+
+            news.setThumbnail(thumbnailPath, thumbnailUrl);
+            newsRepository.save(news);
+
+            log.info("뉴스 썸네일 정보 업데이트 완료: newsId={}, thumbnailUrl={}",
+                    newsId, thumbnailUrl);
+        } catch (Exception e) {
+            log.error("뉴스 썸네일 정보 업데이트 실패: newsId={}, error={}",
+                    newsId, e.getMessage(), e);
+        }
+    }
+
+    // ========== 기존 조회 메서드들 (생략) ==========
+
     public List<NewsResponse> getApprovedNews() {
         List<News> news = newsRepository.findByStatusOrderByCreatedAtDesc(NewsStatus.APPROVED);
         return news.stream()
-                .map(NewsResponse::forPublic)  // 관리 버튼 없는 버전
+                .map(NewsResponse::forPublic)
                 .toList();
     }
 
-    // Expert용 - 내가 작성한 모든 뉴스 조회
     public List<NewsResponse> getNewsByExpert(Long expertId) {
         List<News> news = newsRepository.findByExpertIdOrderByCreatedAtDesc(expertId);
         return news.stream()
@@ -86,15 +163,13 @@ public class NewsService {
                 .toList();
     }
 
-    // Admin용 - 모든 뉴스 조회 (관리 버튼 포함)
     public List<NewsResponse> getAllNewsForAdmin() {
         List<News> news = newsRepository.findAllByOrderByCreatedAtDesc();
         return news.stream()
-                .map(NewsResponse::from)  // 관리 버튼 포함 버전
+                .map(NewsResponse::from)
                 .toList();
     }
 
-    // Admin용 - 승인 대기중인 뉴스만 조회
     public List<NewsResponse> getPendingNews() {
         List<News> news = newsRepository.findByStatusOrderByCreatedAtDesc(NewsStatus.PENDING);
         return news.stream()
@@ -102,22 +177,15 @@ public class NewsService {
                 .toList();
     }
 
-    // 승인 대기중인 뉴스 개수 조회 (대시보드용)
     public long getPendingNewsCount() {
         return newsRepository.countByStatus(NewsStatus.PENDING);
     }
 
-    /**
-     * 뉴스 상세 조회
-     */
     public NewsResponse getNewsDetail(Long newsId) {
         News news = findNewsById(newsId);
         return NewsResponse.from(news);
     }
 
-    /**
-     * Admin 뉴스 관리 액션 처리 (승인/거부/승인해제)
-     */
     @Transactional
     public String manageNews(NewsManageRequest request) {
         News news = findNewsById(request.getNewsId());
@@ -160,9 +228,6 @@ public class NewsService {
         return actionResult;
     }
 
-    /**
-     * 뉴스 완전 삭제 (Admin 전용)
-     */
     @Transactional
     public void deleteNews(Long newsId) {
         News news = findNewsById(newsId);
@@ -173,9 +238,6 @@ public class NewsService {
         newsRepository.delete(news);
     }
 
-    /**
-     * 뉴스 ID로 뉴스 조회 (존재하지 않으면 예외 발생)
-     */
     private News findNewsById(Long newsId) {
         return newsRepository.findById(newsId)
                 .orElseThrow(() -> new GeneralException(FailureCode._NOT_FOUND));

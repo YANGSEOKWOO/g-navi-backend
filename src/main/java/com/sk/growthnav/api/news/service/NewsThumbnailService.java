@@ -26,7 +26,7 @@ public class NewsThumbnailService {
     @Value("${app.storage.pvc.path:/mnt/gnavi}")
     private String pvcBasePath;
 
-    @Value("${app.storage.base-url:http://localhost:8080}")
+    @Value("$https://sk-gnavi4.skala25a.project.skala-ai.com}")
     private String baseUrl;
 
     private static final String THUMBNAIL_DIR = "thumbnails";
