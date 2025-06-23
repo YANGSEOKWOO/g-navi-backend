@@ -6,6 +6,7 @@ import com.sk.growthnav.api.conversation.document.ConversationDocument;
 import com.sk.growthnav.api.conversation.service.ConversationService;
 import com.sk.growthnav.api.member.dto.HomeScreenResponse;
 import com.sk.growthnav.api.member.entity.Member;
+import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.service.MemberService;
 import com.sk.growthnav.api.project.dto.ProjectInfoDTO;
 import com.sk.growthnav.api.project.service.ProjectService;
@@ -33,6 +34,7 @@ public class HomeScreenFacadeService {
         // 1. 회원 정보 조회
         Member member = memberService.findById(memberId);
         String userName = member.getName();
+        MemberLevel level = member.getLevel();
 
         // 2. 회원의 프로젝트 목록 조회 (스킬 포함)
         List<ProjectInfoDTO> projects = projectService.getProjectsByMember(memberId);
@@ -63,7 +65,7 @@ public class HomeScreenFacadeService {
         log.info("=== 대화 제목 생성 디버깅 종료 ===");
 
         // 4. 홈 화면 응답 생성
-        HomeScreenResponse homeScreen = HomeScreenResponse.of(userName, projects, recentConversations);
+        HomeScreenResponse homeScreen = HomeScreenResponse.of(userName, level, projects, recentConversations);
 
         // ===== 생성된 제목 확인 =====
         log.info("=== 생성된 제목들 확인 ===");

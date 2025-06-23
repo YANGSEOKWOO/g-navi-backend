@@ -1,6 +1,7 @@
 package com.sk.growthnav.api.member.dto;
 
 import com.sk.growthnav.api.conversation.document.ConversationDocument;
+import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.project.dto.ProjectInfoDTO;
 import com.sk.growthnav.global.document.SenderType;
 import lombok.*;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class HomeScreenResponse {
 
     String userName;
+    MemberLevel level;
     List<String> skills;
     List<String> projectNames;
 
@@ -147,6 +149,7 @@ public class HomeScreenResponse {
     // 정적 팩토리 메서드 - 리스트로 변경
     public static HomeScreenResponse of(
             String userName,
+            MemberLevel level,
             List<ProjectInfoDTO> projects,
             List<ConversationDocument> recentConversations) {
 
@@ -179,6 +182,7 @@ public class HomeScreenResponse {
         log.info("HomeScreenResponse 생성 완료");
         return HomeScreenResponse.builder()
                 .userName(userName)
+                .level(level)
                 .skills(skills)
                 .projectNames(projectNames)
                 .recentChats(recentChats)
