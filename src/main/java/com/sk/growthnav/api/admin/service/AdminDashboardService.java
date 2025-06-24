@@ -3,21 +3,24 @@ package com.sk.growthnav.api.admin.service;
 import com.sk.growthnav.api.admin.dto.AdminDashboardResponse;
 import com.sk.growthnav.api.admin.dto.AdminDashboardResponse.CategoryStatistics;
 import com.sk.growthnav.api.admin.dto.AdminDashboardResponse.UserStatistics;
+import com.sk.growthnav.api.admin.dto.LevelSkillsResponse;
 import com.sk.growthnav.api.conversation.document.ConversationDocument;
 import com.sk.growthnav.api.conversation.entity.QuestionCategory;
 import com.sk.growthnav.api.conversation.repository.ConversationRepository;
 import com.sk.growthnav.api.member.entity.Member;
 import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.repository.MemberRepository;
+import com.sk.growthnav.api.project.entity.Project;
+import com.sk.growthnav.api.project.repository.ProjectRepository;
+import com.sk.growthnav.api.skill.entity.Skill;
+import com.sk.growthnav.api.skill.repository.SkillRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +30,8 @@ public class AdminDashboardService {
 
     private final MemberRepository memberRepository;
     private final ConversationRepository conversationRepository;
+    private final ProjectRepository projectRepository;
+    private final SkillRepository skillRepository;
 
     /**
      * 관리자 대시보드 데이터 조회
@@ -227,4 +232,140 @@ public class AdminDashboardService {
 
         return result;
     }
+
+    /**
+     * 모든 등급별 기술스택 조회
+     */
+    public Map<MemberLevel, LevelSkillsResponse> getAllLevelSkills() {
+        log.info("모든 등급별 기술스택 조회 시작");
+
+        Map<MemberLevel, LevelSkillsResponse> result = new LinkedHashMap<>();
+
+        // CL1~CL5 순서대로 조회
+        for (MemberLevel level : MemberLevel.values()) {
+            LevelSkillsResponse levelSkills = getLevelSkills(level);
+            result.put(level, levelSkills);
+        }
+
+        log.info("모든 등급별 기술스택 조회 완료: 등급 수={}", result.size());
+        return result;
+    }
+
+    /**
+     * 특정 등급의 기술스택 조회
+     */
+    public LevelSkillsResponse getLevelSkills(MemberLevel level) {
+        log.info("등급별 기술스택 조회 시작: level={}", level);
+
+        // 1. 해당 등급의 모든 회원 조회
+        List<Member> membersOfLevel = memberRepository.findByLevel(level);
+        log.debug("등급 {} 회원 수: {}", level, membersOfLevel.size());
+
+        if (membersOfLevel.isEmpty()) {
+            log.info("등급 {}에 회원이 없음", level);
+            return LevelSkillsResponse.of(level, 0, List.of());
+        }
+
+        // 2. 해당 회원들의 모든 프로젝트 조회
+        List<Long> memberIds = membersOfLevel.stream()
+                .map(Member::getId)
+                .collect(Collectors.toList());
+
+        List<Project> projects = getProjectsByMemberIds(memberIds);
+        log.debug("등급 {} 프로젝트 수: {}", level, projects.size());
+
+        if (projects.isEmpty()) {
+            log.info("등급 {}에 프로젝트가 없음", level);
+            return LevelSkillsResponse.of(level, membersOfLevel.size(), List.of());
+        }
+
+        // 3. 프로젝트들의 모든 스킬 조회 및 통계 계산
+        List<LevelSkillsResponse.SkillStatistic> skillStatistics = calculateSkillStatistics(projects, membersOfLevel.size());
+
+        log.info("등급별 기술스택 조회 완료: level={}, memberCount={}, skillCount={}",
+                level, membersOfLevel.size(), skillStatistics.size());
+
+        return LevelSkillsResponse.of(level, membersOfLevel.size(), skillStatistics);
+    }
+
+    /**
+     * 회원 ID 목록으로 프로젝트 조회
+     */
+    private List<Project> getProjectsByMemberIds(List<Long> memberIds) {
+        List<Project> allProjects = new ArrayList<>();
+
+        // 각 회원별로 프로젝트 조회 (배치 처리 최적화 가능)
+        for (Long memberId : memberIds) {
+            List<Project> memberProjects = projectRepository.findByMemberId(memberId);
+            allProjects.addAll(memberProjects);
+        }
+
+        return allProjects;
+    }
+
+    /**
+     * 스킬 통계 계산
+     */
+    private List<LevelSkillsResponse.SkillStatistic> calculateSkillStatistics(List<Project> projects, int totalMembers) {
+        // 1. 모든 프로젝트의 스킬 조회
+        Map<String, SkillData> skillDataMap = new HashMap<>();
+
+        for (Project project : projects) {
+            List<Skill> projectSkills = skillRepository.findAllByProjectId(project.getId());
+
+            for (Skill skill : projectSkills) {
+                String skillName = skill.getName();
+
+                skillDataMap.computeIfAbsent(skillName, k -> new SkillData())
+                        .addProject(project.getMember().getId(), project.getId());
+            }
+        }
+
+        // 2. 통계 계산 및 정렬
+        return skillDataMap.entrySet().stream()
+                .map(entry -> {
+                    String skillName = entry.getKey();
+                    SkillData data = entry.getValue();
+
+                    return LevelSkillsResponse.SkillStatistic.of(
+                            skillName,
+                            data.getUserCount(),
+                            data.getProjectCount(),
+                            totalMembers
+                    );
+                })
+                .sorted((a, b) -> {
+                    // 사용자 수 내림차순 -> 프로젝트 수 내림차순 -> 이름 오름차순
+                    int userCompare = Integer.compare(b.getUserCount(), a.getUserCount());
+                    if (userCompare != 0) return userCompare;
+
+                    int projectCompare = Integer.compare(b.getProjectCount(), a.getProjectCount());
+                    if (projectCompare != 0) return projectCompare;
+
+                    return a.getSkillName().compareToIgnoreCase(b.getSkillName());
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 스킬 데이터 집계를 위한 내부 클래스
+     */
+    private static class SkillData {
+        private final Set<Long> userIds = new HashSet<>();
+        private final Set<Long> projectIds = new HashSet<>();
+
+        public void addProject(Long userId, Long projectId) {
+            userIds.add(userId);
+            projectIds.add(projectId);
+        }
+
+        public int getUserCount() {
+            return userIds.size();
+        }
+
+        public int getProjectCount() {
+            return projectIds.size();
+        }
+    }
+
 }

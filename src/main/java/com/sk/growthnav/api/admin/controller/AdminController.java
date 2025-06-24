@@ -1,15 +1,18 @@
 package com.sk.growthnav.api.admin.controller;
 
 import com.sk.growthnav.api.admin.dto.AdminDashboardResponse;
+import com.sk.growthnav.api.admin.dto.LevelSkillsResponse;
 import com.sk.growthnav.api.admin.dto.MemberListResponse;
 import com.sk.growthnav.api.admin.dto.RoleChangeRequest;
 import com.sk.growthnav.api.admin.service.AdminDashboardService;
 import com.sk.growthnav.api.admin.service.AdminService;
 import com.sk.growthnav.api.member.dto.LevelChangeRequest;
+import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.service.MemberService;
 import com.sk.growthnav.global.apiPayload.ApiResponse;
 import com.sk.growthnav.global.auth.AuthHelper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "관리자")
 @RestController
@@ -81,6 +85,92 @@ public class AdminController {
         return ApiResponse.onSuccess(dashboardData);
     }
 
+    // ===== 등급별 기술스택 관련 =====
+
+    @Operation(
+            summary = "모든 등급별 기술스택 목록 조회 (Admin 전용)",
+            description = """
+                    CL1~CL5 모든 등급별로 해당 등급 사용자들이 보유한 기술스택을 조회합니다.
+                    
+                    **제공되는 데이터:**
+                    - 각 등급별 고유 기술스택 목록 (중복 제거)
+                    - 기술스택별 사용자 수 (해당 등급 내에서)
+                    - 등급별 총 기술스택 개수
+                    
+                    **응답 예시:**
+                    ```json
+                    {
+                      "CL1": {
+                        "level": "CL1",
+                        "totalSkillCount": 8,
+                        "memberCount": 12,
+                        "skills": [
+                          {"skillName": "Java", "userCount": 5},
+                          {"skillName": "Python", "userCount": 3}
+                        ]
+                      },
+                      "CL2": {
+                        "level": "CL2", 
+                        "totalSkillCount": 15,
+                        "memberCount": 8,
+                        "skills": [...]
+                      }
+                    }
+                    ```
+                    """
+    )
+    @GetMapping("/skills/by-level")
+    public ApiResponse<Map<MemberLevel, LevelSkillsResponse>> getAllLevelSkills(@RequestParam Long adminId) {
+        log.info("등급별 기술스택 조회 요청: adminId={}", adminId);
+
+        // 관리자 권한 확인
+        authHelper.validateAdminRole(adminId);
+
+        Map<MemberLevel, LevelSkillsResponse> levelSkills = adminDashboardService.getAllLevelSkills();
+
+        log.info("등급별 기술스택 조회 완료: adminId={}, levelsCount={}", adminId, levelSkills.size());
+        return ApiResponse.onSuccess(levelSkills);
+    }
+
+    @Operation(
+            summary = "특정 등급의 기술스택 목록 조회 (Admin 전용)",
+            description = """
+                    특정 등급(CL1~CL5)의 사용자들이 보유한 기술스택을 상세 조회합니다.
+                    
+                    **제공되는 데이터:**
+                    - 해당 등급의 모든 고유 기술스택 (중복 제거)
+                    - 각 기술스택을 보유한 사용자 수
+                    - 기술스택별 프로젝트 수
+                    - 인기도 순으로 정렬
+                    
+                    **URL 예시:**
+                    - GET /api/admin/skills/by-level/CL3?adminId=1
+                    """,
+            parameters = {
+                    @Parameter(
+                            name = "level",
+                            description = "조회할 등급 (CL1, CL2, CL3, CL4, CL5)",
+                            required = true,
+                            example = "CL3"
+                    )
+            }
+    )
+    @GetMapping("/skills/by-level/{level}")
+    public ApiResponse<LevelSkillsResponse> getLevelSkills(
+            @PathVariable MemberLevel level,
+            @RequestParam Long adminId) {
+
+        log.info("특정 등급 기술스택 조회 요청: adminId={}, level={}", adminId, level);
+
+        // 관리자 권한 확인
+        authHelper.validateAdminRole(adminId);
+
+        LevelSkillsResponse levelSkills = adminDashboardService.getLevelSkills(level);
+
+        log.info("특정 등급 기술스택 조회 완료: adminId={}, level={}, skillCount={}",
+                adminId, level, levelSkills.getSkills().size());
+        return ApiResponse.onSuccess(levelSkills);
+    }
     // ===== 회원 관리 관련 =====
 
     @Operation(summary = "모든 회원 조회 (관리자 전용)")
