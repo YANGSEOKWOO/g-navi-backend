@@ -119,7 +119,7 @@ public class AdminController {
                     ```
                     """
     )
-    @GetMapping("/skills/by-level")
+    @GetMapping("/levels/skills")
     public ApiResponse<Map<MemberLevel, LevelSkillsResponse>> getAllLevelSkills(@RequestParam Long adminId) {
         log.info("등급별 기술스택 조회 요청: adminId={}", adminId);
 
@@ -144,7 +144,7 @@ public class AdminController {
                     - 인기도 순으로 정렬
                     
                     **URL 예시:**
-                    - GET /api/admin/skills/by-level/CL3?adminId=1
+                    - GET /api/admin/levels/CL3/skills?adminId=1
                     """,
             parameters = {
                     @Parameter(
@@ -155,7 +155,7 @@ public class AdminController {
                     )
             }
     )
-    @GetMapping("/skills/by-level/{level}")
+    @GetMapping("/levels/{level}/skills")
     public ApiResponse<LevelSkillsResponse> getLevelSkills(
             @PathVariable MemberLevel level,
             @RequestParam Long adminId) {
@@ -171,6 +171,7 @@ public class AdminController {
                 adminId, level, levelSkills.getSkills().size());
         return ApiResponse.onSuccess(levelSkills);
     }
+
     // ===== 회원 관리 관련 =====
 
     @Operation(summary = "모든 회원 조회 (관리자 전용)")
