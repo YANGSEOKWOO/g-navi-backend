@@ -1,4 +1,4 @@
-# 1. ChromaDB 전용 Ingress
+# 1. ChromaDB 전용 Ingress (기존 인증서 재사용)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -14,7 +14,7 @@ spec:
     - host: sk-gnavi4.skala25a.project.skala-ai.com
       http:
         paths:
-          - path: /chromadb/(.*)
+          - path: /vector/(.*)
             pathType: ImplementationSpecific
             backend:
               service:
@@ -24,4 +24,4 @@ spec:
   tls:
     - hosts:
         - sk-gnavi4.skala25a.project.skala-ai.com
-      secretName: sk-gnavi4-chromadb-secret
+      secretName: sk-gnavi4-ingress-secret  # 기존 인증서 재사용
