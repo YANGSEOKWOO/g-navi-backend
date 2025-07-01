@@ -1,10 +1,12 @@
 package com.sk.growthnav.api.member.repository;
 
+import com.sk.growthnav.api.member.entity.ExpertiseArea;
 import com.sk.growthnav.api.member.entity.Member;
 import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.entity.MemberRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -85,4 +87,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             "       WHEN m.level = 'CL4' THEN 4 " +
             "       WHEN m.level = 'CL5' THEN 5 END))")
     List<Member> findPotentialMentors(MemberLevel targetLevel);
+
+    @Query("SELECT m FROM Member m WHERE m.expertiseArea = :area AND m.isExpert = true")
+    List<Member> findExpertsByExpertiseArea(@Param("area") ExpertiseArea area);
+
+    @Query("SELECT m FROM Member m WHERE m.isExpert = true ORDER BY m.createdAt DESC")
+    List<Member> findAllExperts();
 }

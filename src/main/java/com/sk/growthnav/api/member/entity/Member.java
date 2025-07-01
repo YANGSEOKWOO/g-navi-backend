@@ -40,10 +40,29 @@ public class Member extends BaseEntity {
     @Builder.Default
     private MemberLevel level = MemberLevel.CL1;  // 기본값: CL1
 
-    // 역할 변경 메서드
-    public void changeRole(MemberRole newRole) {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "expertise_area")
+    private ExpertiseArea expertiseArea;
+
+    // 역할 변경 메서드 (전문 분야 포함)
+    public void changeRole(MemberRole newRole, ExpertiseArea expertiseArea) {
         this.role = newRole;
-        this.isExpert = (newRole == MemberRole.EXPERT);
+
+        if (newRole == MemberRole.EXPERT) {
+            // EXPERT로 변경
+            this.isExpert = true;
+            this.expertiseArea = expertiseArea; // 전문 분야 설정
+        } else {
+            // USER나 ADMIN으로 변경
+            this.isExpert = (newRole == MemberRole.ADMIN);
+            this.expertiseArea = null; // 전문 분야 제거
+        }
+    }
+
+    // 기존 메서드는 deprecated로 유지 (하위 호환성)
+    @Deprecated
+    public void changeRole(MemberRole newRole) {
+        changeRole(newRole, null);
     }
 
     // 등급 변경 메서드

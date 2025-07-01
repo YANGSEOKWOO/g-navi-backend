@@ -1,5 +1,6 @@
 package com.sk.growthnav.api.member.dto;
 
+import com.sk.growthnav.api.member.entity.ExpertiseArea;
 import com.sk.growthnav.api.member.entity.Member;
 import com.sk.growthnav.api.member.entity.MemberLevel;
 import lombok.*;
@@ -16,6 +17,7 @@ public class MemberInfo {
     String name;
     String email;
     MemberLevel level;
+    ExpertiseArea expertiseArea;
 
     public static MemberInfo from(Member member) {
         return MemberInfo.builder()
@@ -23,6 +25,7 @@ public class MemberInfo {
                 .name(member.getName())
                 .email(member.getEmail())
                 .level(member.getLevel())
+                .expertiseArea(member.getExpertiseArea())
                 .build();
     }
 }

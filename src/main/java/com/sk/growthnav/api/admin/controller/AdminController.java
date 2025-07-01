@@ -7,6 +7,7 @@ import com.sk.growthnav.api.admin.dto.RoleChangeRequest;
 import com.sk.growthnav.api.admin.service.AdminDashboardService;
 import com.sk.growthnav.api.admin.service.AdminService;
 import com.sk.growthnav.api.member.dto.LevelChangeRequest;
+import com.sk.growthnav.api.member.entity.ExpertiseArea;
 import com.sk.growthnav.api.member.entity.MemberLevel;
 import com.sk.growthnav.api.member.service.MemberService;
 import com.sk.growthnav.global.apiPayload.ApiResponse;
@@ -184,17 +185,109 @@ public class AdminController {
         return ApiResponse.onSuccess(members);
     }
 
-    @Operation(summary = "회원 역할 변경 (관리자 전용)")
+    @Operation(
+            summary = "회원 역할 변경 (관리자 전용)",
+            description = """
+                    회원의 역할을 변경합니다. EXPERT로 변경할 때는 전문 분야도 함께 설정해야 합니다.
+                    
+                    **역할 변경 규칙:**
+                    - USER → EXPERT: expertiseArea 필수
+                    - USER → ADMIN: expertiseArea 불필요 (자동으로 null)
+                    - EXPERT → USER: expertiseArea 자동으로 제거
+                    - EXPERT → ADMIN: expertiseArea 자동으로 제거
+                    - ADMIN → USER: expertiseArea 자동으로 제거
+                    - ADMIN → EXPERT: expertiseArea 필수
+                    
+                    **전문 분야 목록:**
+                    - FINANCE(금융), MANUFACTURE(제조), AI(AI), SEMICONDUCTOR(반도체)
+                    """,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "역할 변경 요청",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RoleChangeRequest.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "사용자를 전문가로 변경",
+                                            value = """
+                                                    {
+                                                      "memberId": 5,
+                                                      "newRole": "EXPERT",
+                                                      "expertiseArea": "FINANCE"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "전문가를 사용자로 변경",
+                                            value = """
+                                                    {
+                                                      "memberId": 5,
+                                                      "newRole": "USER"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "사용자를 관리자로 변경",
+                                            value = """
+                                                    {
+                                                      "memberId": 5,
+                                                      "newRole": "ADMIN"
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    )
     @PutMapping("/members/role")
     public ApiResponse<String> changeUserRole(
             @RequestParam Long adminId,
             @Valid @RequestBody RoleChangeRequest request) {
 
+        log.info("역할 변경 요청: adminId={}, memberId={}, newRole={}, expertiseArea={}",
+                adminId, request.getMemberId(), request.getNewRole(), request.getExpertiseArea());
+
         // 관리자 권한 확인
         authHelper.validateAdminRole(adminId);
 
-        adminService.changeMemberRole(request.getMemberId(), request.getNewRole());
-        return ApiResponse.onSuccess("회원 역할이 변경되었습니다.");
+        // 요청 유효성 검증
+        if (!request.isValid()) {
+            throw new IllegalArgumentException("EXPERT 역할로 변경할 때는 전문 분야가 필요합니다.");
+        }
+
+        String result = adminService.changeMemberRole(request);
+
+        log.info("역할 변경 완료: memberId={}", request.getMemberId());
+        return ApiResponse.onSuccess(result);
+    }
+
+    @Operation(
+            summary = "전문 분야별 전문가 목록 조회 (Admin 전용)",
+            description = "특정 전문 분야의 전문가들을 조회합니다."
+    )
+    @GetMapping("/experts/by-area/{area}")
+    public ApiResponse<List<MemberListResponse>> getExpertsByArea(
+            @PathVariable ExpertiseArea area,
+            @RequestParam Long adminId) {
+
+        log.info("전문 분야별 전문가 조회: adminId={}, area={}", adminId, area);
+        authHelper.validateAdminRole(adminId);
+
+        List<MemberListResponse> experts = adminService.getExpertsByArea(area);
+        return ApiResponse.onSuccess(experts);
+    }
+
+    @Operation(
+            summary = "모든 전문가 목록 조회 (Admin 전용)",
+            description = "모든 전문가의 목록과 전문 분야를 조회합니다."
+    )
+    @GetMapping("/experts")
+    public ApiResponse<List<MemberListResponse>> getAllExperts(@RequestParam Long adminId) {
+        log.info("모든 전문가 조회: adminId={}", adminId);
+        authHelper.validateAdminRole(adminId);
+
+        List<MemberListResponse> experts = adminService.getAllExperts();
+        return ApiResponse.onSuccess(experts);
     }
 
     @Operation(
