@@ -304,7 +304,7 @@ public class AdminDashboardService {
     }
 
     /**
-     * 스킬 통계 계산
+     * 스킬 통계 계산 (전체 스킬 대비 비율)
      */
     private List<LevelSkillsResponse.SkillStatistic> calculateSkillStatistics(List<Project> projects, int totalMembers) {
         // 1. 모든 프로젝트의 스킬 조회
@@ -321,17 +321,24 @@ public class AdminDashboardService {
             }
         }
 
+        // 🔥 전체 스킬 종류 개수 계산
+        int totalSkillTypes = skillDataMap.size();
+
+        log.debug("등급별 스킬 통계: totalMembers={}, totalSkillTypes={}", totalMembers, totalSkillTypes);
+
         // 2. 통계 계산 및 정렬
         return skillDataMap.entrySet().stream()
                 .map(entry -> {
                     String skillName = entry.getKey();
                     SkillData data = entry.getValue();
 
-                    return LevelSkillsResponse.SkillStatistic.of(
+                    // 🔥 전체 스킬 대비 비율로 계산 변경
+                    return LevelSkillsResponse.SkillStatistic.ofWithSkillRatio(
                             skillName,
                             data.getUserCount(),
                             data.getProjectCount(),
-                            totalMembers
+                            totalMembers,
+                            totalSkillTypes  // 전체 스킬 종류 수 전달
                     );
                 })
                 .sorted((a, b) -> {

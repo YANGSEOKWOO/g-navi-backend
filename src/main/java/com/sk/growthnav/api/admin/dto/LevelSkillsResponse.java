@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Slf4j
 public class LevelSkillsResponse {
 
     private MemberLevel level;          // 등급 (CL1, CL2, ...)
@@ -37,6 +39,23 @@ public class LevelSkillsResponse {
                     .userCount(userCount)
                     .projectCount(projectCount)
                     .percentage(Math.round(percentage * 10.0) / 10.0) // 소수점 첫째자리까지
+                    .build();
+        }
+
+        // 전체 스킬 대비 비율
+        public static SkillStatistic ofWithSkillRatio(String skillName, Integer userCount, Integer projectCount,
+                                                      Integer totalMembers, Integer totalSkillTypes) {
+            // 전체 스킬 종류 대비 각 스킬의 비율
+            double skillRatio = totalSkillTypes > 0 ? 100.0 / totalSkillTypes : 0.0;
+
+            log.debug("스킬 비율 계산: skillName={}, totalSkillTypes={}, ratio={}%",
+                    skillName, totalSkillTypes, skillRatio);
+
+            return SkillStatistic.builder()
+                    .skillName(skillName)
+                    .userCount(userCount)
+                    .projectCount(projectCount)
+                    .percentage(Math.round(skillRatio * 10.0) / 10.0) // 소수점 첫째자리까지
                     .build();
         }
     }
