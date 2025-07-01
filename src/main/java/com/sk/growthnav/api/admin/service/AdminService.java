@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -26,6 +27,7 @@ public class AdminService {
     public List<MemberListResponse> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members.stream()
+                .sorted(Comparator.comparing(Member::getId))
                 .map(MemberListResponse::from)
                 .toList();
     }
