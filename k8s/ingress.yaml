@@ -5,12 +5,15 @@ metadata:
   namespace: sk-team-04
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: public-nginx
   rules:
     - host: sk-gnavi4.skala25a.project.skala-ai.com
       http:
         paths:
+          # ChromaDB - /chromadb/* -> /*로 rewrite
           - path: /chromadb(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
@@ -18,21 +21,8 @@ spec:
                 name: chromadb-1
                 port:
                   number: 8000
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: gnavi4-backend
-                port:
-                  number: 8080
-          #파일 서빙 경로
-          - path: /files
-            pathType: Prefix
-            backend:
-              service:
-                name: gnavi4-backend
-                port:
-                  number: 8080
+
+          # AI 서비스
           - path: /ai
             pathType: Prefix
             backend:
@@ -40,6 +30,17 @@ spec:
                 name: gnavi4-ai
                 port:
                   number: 8001
+
+          # 파일 서빙 경로
+          - path: /files
+            pathType: Prefix
+            backend:
+              service:
+                name: gnavi4-backend
+                port:
+                  number: 8080
+
+          # Swagger UI
           - path: /swagger
             pathType: Prefix
             backend:
@@ -47,6 +48,8 @@ spec:
                 name: gnavi4-backend
                 port:
                   number: 8080
+
+          # Actuator
           - path: /actuator
             pathType: Prefix
             backend:
@@ -54,6 +57,17 @@ spec:
                 name: gnavi4-backend
                 port:
                   number: 8081
+
+          # Backend API
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: gnavi4-backend
+                port:
+                  number: 8080
+
+          # Frontend
           - path: /
             pathType: Prefix
             backend:
