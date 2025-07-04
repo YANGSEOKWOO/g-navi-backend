@@ -27,6 +27,7 @@ public class FastApiChatRequest {
         // 1. 사용자 정보 구성
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("name", member.getName());
+        userInfo.put("level", member.getLevel());
 
         // 2. 프로젝트 정보를 FastAPI 형식으로 변환 (camelCase)
         List<Map<String, Object>> projectsFormatted = projects.stream()
