@@ -29,8 +29,7 @@ Growth Navigator는 개발자들의 커리어 성장을 돕는 AI 기반 상담 
 
   ### 시스템 구조
   #### 시스템 아키텍처
-
-    <img width="736" height="582" alt="image" src="https://github.com/user-attachments/assets/8caf60f9-e19f-4a4d-88c0-53236478e890" />
+<img width="3000" height="1200" alt="아키텍처 구d조" src="https://github.com/user-attachments/assets/5d7792e4-ea06-40b3-86b6-862bff12d901" />
 
 
   #### 인프라 아키텍처
